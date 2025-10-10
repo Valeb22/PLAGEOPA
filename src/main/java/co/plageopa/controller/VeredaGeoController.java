@@ -31,7 +31,7 @@ public class VeredaGeoController {
                         'type', 'Feature',
                         'geometry', ST_AsGeoJSON(geom)::json,
                         'properties', json_build_object(
-                            'id', id,
+                            'id', id_vereda,
                             'codigo_corto', codigo_corto
                         )
                     )
@@ -61,7 +61,7 @@ public class VeredaGeoController {
                         'type', 'Feature',
                         'geometry', ST_AsGeoJSON(geom)::json,
                         'properties', json_build_object(
-                            'id', id,
+                            'id', id_vereda,
                             'codigo_corto', codigo_corto
                         )
                     )

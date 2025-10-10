@@ -9,7 +9,7 @@ CREATE TABLE usuarios (
   id_usuario   SERIAL PRIMARY KEY,
   nombre       VARCHAR(200) NOT NULL,
   correo       VARCHAR(150) NOT NULL UNIQUE,
-  contraseña   VARCHAR(255) NOT NULL,  
+  contrasena   VARCHAR(255) NOT NULL,  
   rol          VARCHAR(20)  NOT NULL
 );
 CREATE INDEX usuarios_correo_idx ON usuarios (correo);

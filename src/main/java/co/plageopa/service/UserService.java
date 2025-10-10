@@ -19,23 +19,23 @@ public class UserService {
     }
 
     public Usuario create(String username, String email, String rawPassword) {
-        if (userRepository.existsByUsername(username)) {
+        if (userRepository.existsByNombre(username)) {
             throw new IllegalArgumentException("El nombre de usuario ya existe");
         }
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByCorreo(email)) {
             throw new IllegalArgumentException("El correo ya está registrado");
         }
         Usuario u = new Usuario();
         u.setNombre(username);
         u.setCorreo(email);
-        u.setContraseña(rawPassword); // ⚠ solo para pruebas
+        u.setContrasena(rawPassword); // ⚠ solo para pruebas
         u.setRol("USER"); 
         return userRepository.save(u);
     }
 
 
     public Optional<Usuario> login(String username, String rawPassword) {
-        return userRepository.findByUsername(username)
-                .filter(u -> u.getContraseña().equals(rawPassword));
+        return userRepository.findByNombre(username)
+                .filter(u -> u.getContrasena().equals(rawPassword));
     }
 }

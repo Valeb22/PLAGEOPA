@@ -27,4 +27,20 @@ public class GeoController {
         double maxY = Double.parseDouble(p[3]);
         return geo.veredasFeatureCollectionByBbox(minX, minY, maxX, maxY);
     }
+    
+    @GetMapping(value = "/fincas", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String fincas() {
+        return geo.fincasFeatureCollection();
+    }
+
+    @GetMapping(value = "/fincas/bbox", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String fincasBbox(@RequestParam String bbox) {
+        String[] p = bbox.split(",", -1);
+        double minX = Double.parseDouble(p[0]);
+        double minY = Double.parseDouble(p[1]);
+        double maxX = Double.parseDouble(p[2]);
+        double maxY = Double.parseDouble(p[3]);
+        return geo.fincasFeatureCollectionByBbox(minX, minY, maxX, maxY);
+    }
+
 }

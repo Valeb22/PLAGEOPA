@@ -27,7 +27,7 @@ public class Usuario {
 
     @NotBlank
     @Column(nullable = false, length = 255)
-    private String contraseña;
+    private String contrasena;
 
     @NotBlank
     @Column(nullable = false, length = 20)
@@ -67,12 +67,12 @@ public class Usuario {
 		this.correo = correo;
 	}
 
-	public String getContraseña() {
-		return contraseña;
+	public String getContrasena() {
+		return contrasena;
 	}
 
-	public void setContraseña(String contraseña) {
-		this.contraseña = contraseña;
+	public void setContrasena(String contrasena) {
+		this.contrasena = contrasena;
 	}
 
 	public String getRol() {
@@ -85,13 +85,13 @@ public class Usuario {
 
 
 
-	public Usuario(Integer id, @NotBlank String nombre, @NotBlank @Email String correo, @NotBlank String contraseña,
+	public Usuario(Integer id, @NotBlank String nombre, @NotBlank @Email String correo, @NotBlank String contrasena,
 			@NotBlank String rol) {
 		super();
 		this.id = id;
 		this.nombre = nombre;
 		this.correo = correo;
-		this.contraseña = contraseña;
+		this.contrasena = contrasena;
 		this.rol = rol;
 	}
 
