@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import co.plageopa.domain.Vereda;
 
-public interface VeredaRepository extends JpaRepository<Vereda, Long> {
+public interface VeredaRepository extends JpaRepository<Vereda, Integer> {
 
     @Query(
       value = "SELECT * FROM veredas WHERE codigo_corto = :codigo ORDER BY id_vereda ASC LIMIT 1",

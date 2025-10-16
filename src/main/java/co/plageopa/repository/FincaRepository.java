@@ -10,12 +10,13 @@ public interface FincaRepository extends JpaRepository<Finca, Integer> {
 
   List<Finca> findByProductorId(Integer productorId);
 
-  @Query(value = """
-    select exists (
-      select 1
-      from fincas
-      where ST_Equals(geom, ST_SetSRID(ST_MakePoint(?1, ?2), 4326))
-    )
-    """, nativeQuery = true)
-  boolean existsByLonLat(double lon, double lat);
+  @Query(
+		  value = "SELECT EXISTS (" +
+		          "  SELECT 1 FROM fincas " +
+		          "  WHERE ST_DWithin(geom, ST_SetSRID(ST_MakePoint(?1, ?2), 4326), CAST(0.000001 AS double precision))" +
+		          ")",
+		  nativeQuery = true
+		)
+		boolean existsByLonLat(double lon, double lat);
+
 }

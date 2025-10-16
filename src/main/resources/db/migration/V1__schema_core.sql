@@ -27,12 +27,14 @@ CREATE TABLE logs (
   fecha_hora            TIMESTAMP NOT NULL,
   tabla_afectada        VARCHAR(50) NOT NULL,
   operacion             VARCHAR(10) NOT NULL,
-  id_registro_afectado  INT NOT NULL
+  id_registro_afectado  INT NOT NULL,
+  detalle               TEXT  -- <-- NUEVO: detalle de lo ocurrido
 );
 
 CREATE INDEX logs_usuario_idx         ON logs (id_usuario);
 CREATE INDEX logs_fecha_idx           ON logs (fecha_hora);
 CREATE INDEX logs_tabla_registro_idx  ON logs (tabla_afectada, id_registro_afectado);
+
 
 -- =========================
 -- 3) Tabla PRODUCTORES

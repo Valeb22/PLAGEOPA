@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import co.plageopa.domain.Cultivo;
 
 public interface CultivoRepository extends JpaRepository<Cultivo, Integer> {
-	void deleteByFincaId(Long fincaId);
-	List<Cultivo> findByFincaId(Long fincaId);
+	void deleteByFincaId(Integer fincaId);
+	List<Cultivo> findByFincaId(Integer fincaId);
 
 }
 
