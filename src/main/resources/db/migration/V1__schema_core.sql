@@ -18,14 +18,18 @@ CREATE INDEX usuarios_correo_idx ON usuarios (correo);
 -- 2) Tabla LOGS
 -- =========================
 DROP TABLE IF EXISTS logs CASCADE;
+
 CREATE TABLE logs (
   id_log                SERIAL PRIMARY KEY,
-  id_usuario            INT REFERENCES usuarios(id_usuario), -- lo dejo sin NOT NULL por si borras usuarios
+  id_usuario            INT REFERENCES usuarios(id_usuario),
+  usuario_nombre        VARCHAR(200),
+  usuario_correo        VARCHAR(150),
   fecha_hora            TIMESTAMP NOT NULL,
   tabla_afectada        VARCHAR(50) NOT NULL,
   operacion             VARCHAR(10) NOT NULL,
   id_registro_afectado  INT NOT NULL
 );
+
 CREATE INDEX logs_usuario_idx         ON logs (id_usuario);
 CREATE INDEX logs_fecha_idx           ON logs (fecha_hora);
 CREATE INDEX logs_tabla_registro_idx  ON logs (tabla_afectada, id_registro_afectado);

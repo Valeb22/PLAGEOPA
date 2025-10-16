@@ -6,98 +6,119 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "logs",
-       indexes = {
-           @Index(name = "logs_usuario_idx", columnList = "id_usuario"),
-           @Index(name = "logs_fecha_idx", columnList = "fecha_hora"),
-           @Index(name = "logs_tabla_registro_idx", columnList = "tabla_afectada,id_registro_afectado")
-       })
-@Getter @Setter
+@Entity @Table(name="logs")
 public class Log {
+@Id @GeneratedValue(strategy=GenerationType.IDENTITY)
+private Integer idLog;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_log")
-    private Integer id;
+@ManyToOne(optional = true, fetch = FetchType.LAZY)
+@JoinColumn(name = "id_usuario")
+private Usuario usuario; 
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_usuario") // puede ser null
-    private Usuario usuario;
+@Column(name="usuario_nombre") private String usuarioNombre;   // NUEVO
+@Column(name="usuario_correo") private String usuarioCorreo;   // NUEVO
 
-    @Column(name = "fecha_hora", nullable = false)
-    private LocalDateTime fechaHora;
+@Column(name="fecha_hora") private LocalDateTime fechaHora;
+@Column(name="tabla_afectada") private String tablaAfectada;
+@Column(name="operacion") private String operacion;
+@Column(name="id_registro_afectado") private Integer idRegistroAfectado;
 
-    @Column(name = "tabla_afectada", nullable = false, length = 50)
-    private String tablaAfectada;
 
-    @Column(nullable = false, length = 10)
-    private String operacion; // INSERT/UPDATE/DELETE/LOGIN...
+public Log() {
+	// TODO Auto-generated constructor stub
+}
 
-    @Column(name = "id_registro_afectado", nullable = false)
-    private Integer idRegistroAfectado;
-    
-    public Log() {
-		// TODO Auto-generated constructor stub
-	}
 
-	public Integer getId() {
-		return id;
-	}
+public Log(Integer idLog, Usuario usuario, String usuarioNombre, String usuarioCorreo, LocalDateTime fechaHora,
+		String tablaAfectada, String operacion, Integer idRegistroAfectado) {
+	super();
+	this.idLog = idLog;
+	this.usuario = usuario;
+	this.usuarioNombre = usuarioNombre;
+	this.usuarioCorreo = usuarioCorreo;
+	this.fechaHora = fechaHora;
+	this.tablaAfectada = tablaAfectada;
+	this.operacion = operacion;
+	this.idRegistroAfectado = idRegistroAfectado;
+}
 
-	public void setId(Integer id) {
-		this.id = id;
-	}
 
-	public Usuario getUsuario() {
-		return usuario;
-	}
+public Integer getIdLog() {
+	return idLog;
+}
 
-	public void setUsuario(Usuario usuario) {
-		this.usuario = usuario;
-	}
 
-	public LocalDateTime getFechaHora() {
-		return fechaHora;
-	}
+public void setIdLog(Integer idLog) {
+	this.idLog = idLog;
+}
 
-	public void setFechaHora(LocalDateTime fechaHora) {
-		this.fechaHora = fechaHora;
-	}
 
-	public String getTablaAfectada() {
-		return tablaAfectada;
-	}
+public Usuario getUsuario() {
+	return usuario;
+}
 
-	public void setTablaAfectada(String tablaAfectada) {
-		this.tablaAfectada = tablaAfectada;
-	}
 
-	public String getOperacion() {
-		return operacion;
-	}
+public void setUsuario(Usuario usuario) {
+	this.usuario = usuario;
+}
 
-	public void setOperacion(String operacion) {
-		this.operacion = operacion;
-	}
 
-	public Integer getIdRegistroAfectado() {
-		return idRegistroAfectado;
-	}
+public String getUsuarioNombre() {
+	return usuarioNombre;
+}
 
-	public void setIdRegistroAfectado(Integer idRegistroAfectado) {
-		this.idRegistroAfectado = idRegistroAfectado;
-	}
 
-	public Log(Integer id, Usuario usuario, LocalDateTime fechaHora, String tablaAfectada, String operacion,
-			Integer idRegistroAfectado) {
-		super();
-		this.id = id;
-		this.usuario = usuario;
-		this.fechaHora = fechaHora;
-		this.tablaAfectada = tablaAfectada;
-		this.operacion = operacion;
-		this.idRegistroAfectado = idRegistroAfectado;
-	}
-    	
+public void setUsuarioNombre(String usuarioNombre) {
+	this.usuarioNombre = usuarioNombre;
+}
+
+
+public String getUsuarioCorreo() {
+	return usuarioCorreo;
+}
+
+
+public void setUsuarioCorreo(String usuarioCorreo) {
+	this.usuarioCorreo = usuarioCorreo;
+}
+
+
+public LocalDateTime getFechaHora() {
+	return fechaHora;
+}
+
+
+public void setFechaHora(LocalDateTime fechaHora) {
+	this.fechaHora = fechaHora;
+}
+
+
+public String getTablaAfectada() {
+	return tablaAfectada;
+}
+
+
+public void setTablaAfectada(String tablaAfectada) {
+	this.tablaAfectada = tablaAfectada;
+}
+
+
+public String getOperacion() {
+	return operacion;
+}
+
+
+public void setOperacion(String operacion) {
+	this.operacion = operacion;
+}
+
+
+public Integer getIdRegistroAfectado() {
+	return idRegistroAfectado;
+}
+
+
+public void setIdRegistroAfectado(Integer idRegistroAfectado) {
+	this.idRegistroAfectado = idRegistroAfectado;
+}
 }
