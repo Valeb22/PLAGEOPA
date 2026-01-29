@@ -33,57 +33,37 @@ public class Cultivo {
     private BigDecimal area;
     
     public Cultivo() {
-		// TODO Auto-generated constructor stub
-	}
-
-	
-
+    	    }
 	public Integer getId() {
 		return id;
 	}
-
-
-
 	public void setId(Integer id) {
 		this.id = id;
 	}
-
-
-
 	public Finca getFinca() {
 		return finca;
 	}
-
 	public void setFinca(Finca finca) {
 		this.finca = finca;
 	}
-
 	public String getNombreCultivo() {
 		return nombreCultivo;
 	}
-
 	public void setNombreCultivo(String nombreCultivo) {
 		this.nombreCultivo = nombreCultivo;
 	}
-
 	public String getVariedad() {
 		return variedad;
 	}
-
 	public void setVariedad(String variedad) {
 		this.variedad = variedad;
 	}
-
 	public BigDecimal getArea() {
 		return area;
 	}
-
 	public void setArea(BigDecimal area) {
 		this.area = area;
 	}
-
-
-
 	public Cultivo(Integer id, Finca finca, String nombreCultivo, String variedad, BigDecimal area) {
 		super();
 		this.id = id;

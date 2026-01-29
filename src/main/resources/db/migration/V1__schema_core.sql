@@ -6,11 +6,12 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 -- =========================
 DROP TABLE IF EXISTS usuarios CASCADE;
 CREATE TABLE usuarios (
-  id_usuario   SERIAL PRIMARY KEY,
-  nombre       VARCHAR(200) NOT NULL,
-  correo       VARCHAR(150) NOT NULL UNIQUE,
-  contrasena   VARCHAR(255) NOT NULL,  
-  rol          VARCHAR(20)  NOT NULL
+  id_usuario            SERIAL PRIMARY KEY,
+  nombre                VARCHAR(200) NOT NULL,
+  correo                VARCHAR(150) NOT NULL UNIQUE,
+  contrasena            VARCHAR(255) NOT NULL,
+  rol                   VARCHAR(20)  NOT NULL,
+  must_change_password  BOOLEAN      NOT NULL DEFAULT FALSE
 );
 CREATE INDEX usuarios_correo_idx ON usuarios (correo);
 

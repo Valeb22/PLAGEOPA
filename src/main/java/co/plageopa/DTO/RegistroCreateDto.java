@@ -14,8 +14,6 @@ public class RegistroCreateDto {
   @NotNull @Valid
   private List<@Valid CultivoDto> cultivos;
 
-  // getters/setters
-  // ...
   public ProductorDto getProductor(){ return productor; }
   public void setProductor(ProductorDto v){ this.productor = v; }
   public FincaDto getFinca(){ return finca; }

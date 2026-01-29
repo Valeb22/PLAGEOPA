@@ -1,12 +1,15 @@
 package co.plageopa.DTO;
 
+import jakarta.validation.constraints.DecimalMin;
+
 public class CultivoDto {
-    private Integer id;              // <-- NUEVO
+    private Integer id;             
     private String  nombreCultivo;
     private String  variedad;
-    private Double  area;
+    @DecimalMin("0.0")
+    private Double area;
 
-    // getters/setters
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 

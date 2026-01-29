@@ -1,14 +1,17 @@
 package co.plageopa.DTO;
 
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+
 public class FincaDto {
     private Double  areaTotal;
     private String  tipoActividad;
-    private Double  lon;
-    private Double  lat;
+    @NotNull @DecimalMin("-180.0") @DecimalMax("180.0") private Double lon;
+    @NotNull @DecimalMin("-90.0")  @DecimalMax("90.0")  private Double lat;
     private String  veredaCodigo;
-    private String  globalid;   // <-- NUEVO
+    private String  globalid;  
 
-    // getters/setters
     public Double getAreaTotal() { return areaTotal; }
     public void setAreaTotal(Double areaTotal) { this.areaTotal = areaTotal; }
 

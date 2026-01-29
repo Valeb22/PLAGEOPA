@@ -37,7 +37,6 @@ public class Log {
     @Column(name = "detalle", columnDefinition = "TEXT")
     private String detalle;
 
-    // ---------- Constructores ----------
     public Log() {}
 
     public Log(Integer id, Usuario usuario, String usuarioNombre, String usuarioCorreo,
@@ -54,7 +53,6 @@ public class Log {
         this.detalle = detalle;
     }
 
-    // ---------- Getters y Setters ----------
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 

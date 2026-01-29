@@ -6,10 +6,10 @@ import jakarta.validation.constraints.Size;
 public class FincaUpdateDto {
 @DecimalMin("0.0") private Double areaTotal;
 @Size(max=200)     private String tipoActividad;
-private Double lon;  // si cambian, revalidamos punto único
+private Double lon;  
 private Double lat;
-private String codigoVereda; // opcional
-private String globalid;     // opcional para elegir qué finca actualizar (si hay varias)
+private String codigoVereda; 
+private String globalid;     
 public Double getAreaTotal() {
 	return areaTotal;
 }

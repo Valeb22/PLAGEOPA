@@ -5,8 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public class CultivoUpsertDto {
-private Integer id; // null => crear; no-null => editar
-@NotBlank @Size(max=100) private String nombreCultivo;
+private Integer id; 
+private String nombreCultivo;
 @Size(max=100)          private String variedad;
 @DecimalMin("0.0")      private Double area;
 public Integer getId() {

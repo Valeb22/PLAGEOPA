@@ -48,23 +48,13 @@ public class Finca {
     private Point geom;
     
     public Finca() {
-		// TODO Auto-generated constructor stub
 	}
-
-	
-
 	public Integer getId() {
 		return id;
 	}
-
-
-
 	public void setId(Integer id) {
 		this.id = id;
 	}
-
-
-
 	public UUID getGlobalid() {
 		return globalid;
 	}
@@ -112,8 +102,6 @@ public class Finca {
 	public void setGeom(Point geom) {
 		this.geom = geom;
 	}
-
-
 
 	public Finca(Integer id, UUID globalid, Productor productor, Vereda vereda, BigDecimal areaTotal,
 			String tipoActividad, Point geom) {

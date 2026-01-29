@@ -2,6 +2,7 @@ package co.plageopa.controller;
 
 import co.plageopa.repository.GeoDao;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,11 +14,10 @@ public class GeoController {
     public GeoController(GeoDao geo) { this.geo = geo; }
 
     @GetMapping(value = "/veredas", produces = MediaType.APPLICATION_JSON_VALUE)
-    public String veredas() {
-        return geo.veredasFeatureCollection();
+    public ResponseEntity<String> veredas() {
+        return ResponseEntity.ok(geo.veredasFeatureCollection());
     }
 
-    // /api/geo/veredas/bbox?bbox=minX,minY,maxX,maxY
     @GetMapping(value = "/veredas/bbox", produces = MediaType.APPLICATION_JSON_VALUE)
     public String veredasBbox(@RequestParam String bbox) {
         String[] p = bbox.split(",", -1);

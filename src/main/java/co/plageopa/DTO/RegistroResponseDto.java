@@ -4,7 +4,6 @@ import java.util.List;
 
 import lombok.Data;
 
-//co.plageopa.dto.RegistroResponseDto
 @Data
 public class RegistroResponseDto {
 private ProductorDto productor;
