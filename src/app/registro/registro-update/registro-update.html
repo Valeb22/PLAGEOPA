@@ -1,0 +1,201 @@
+<!-- Toasts -->
+<div class="toast-stack" *ngIf="toasts().length">
+  <div class="toast" *ngFor="let t of toasts()" [class]="'toast toast--' + t.type">
+    <div class="toast__body">
+      <strong>{{ t.title }}</strong>
+      <div class="toast__msg">{{ t.message }}</div>
+    </div>
+    <button class="toast__close" type="button" (click)="dismissToast(t.id)">✕</button>
+  </div>
+</div>
+
+<section class="card">
+  <h2 class="title">Editar / Eliminar por cédula</h2>
+
+  <!-- Barra superior -->
+  <div class="topbar">
+    <label class="field">
+      <span>Cédula</span>
+      <input
+        class="input"
+        [(ngModel)]="searchCedula"
+        inputmode="numeric"
+        placeholder="Cédula a editar"
+        [disabled]="loading()"
+      />
+      <small class="hint">Solo números. Ej: 1020304050</small>
+    </label>
+
+    <div class="actions">
+      <button type="button" class="btn btn--secondary" (click)="cargarPorCedula()" [disabled]="!searchCedula || loading()">
+        Cargar
+      </button>
+
+      <button type="button" class="btn btn--primary" (click)="patch()" [disabled]="!searchCedula || loading()">
+        <span *ngIf="!loading()">Guardar cambios</span>
+        <span *ngIf="loading()">
+          <span class="spinner" aria-hidden="true"></span>
+          Guardando…
+        </span>
+      </button>
+
+      <button type="button" class="btn btn--danger" (click)="eliminarProductor()" [disabled]="!searchCedula || loading()">
+        Eliminar productor
+      </button>
+    </div>
+  </div>
+
+  <form [formGroup]="form" class="grid" novalidate>
+    <!-- PRODUCTOR -->
+    <fieldset formGroupName="productor" class="box">
+      <legend>Productor</legend>
+
+      <label>
+        Nombre
+        <input class="input" formControlName="nombre" placeholder="Deja vacío si no quieres cambiarlo" />
+      </label>
+
+      <label>
+        Teléfono
+        <input class="input" formControlName="telefono" placeholder="Deja vacío si no quieres cambiarlo" />
+      </label>
+
+      <label class="tip">
+        Pertenece a asociación
+        <select class="input" formControlName="perteneceAsociacion">
+          <option [ngValue]="null">— no cambiar —</option>
+          <option [ngValue]="true">Sí</option>
+          <option [ngValue]="false">No</option>
+        </select>
+        <span class="tip__bubble">Selecciona “no cambiar” si no quieres modificar este valor.</span>
+      </label>
+
+      <label class="tip">
+        Nombre asociación
+        <input class="input" formControlName="nombreAsociacion" placeholder="Requerido si seleccionas Sí" />
+        <small class="err" *ngIf="(submitted || form.get('productor.nombreAsociacion')?.touched) && form.get('productor.nombreAsociacion')?.errors?.['required']">
+          Si pertenece a una asociación, debes indicar el nombre.
+        </small>
+        <span class="tip__bubble">Solo aplica si “Pertenece a asociación” = Sí.</span>
+      </label>
+    </fieldset>
+
+    <!-- FINCA -->
+    <fieldset formGroupName="finca" class="box">
+      <legend>Finca</legend>
+
+      <label class="tip">
+        GlobalID (solo lectura)
+        <input class="input" formControlName="globalid" readonly />
+        <span class="tip__bubble">Identificador de la finca (útil si un productor tiene varias).</span>
+      </label>
+
+      <label>
+        Área total (ha)
+        <input class="input" type="number" step="0.01" formControlName="areaTotal" />
+        <small class="err" *ngIf="fieldError('finca.areaTotal')">{{ fieldError('finca.areaTotal') }}</small>
+      </label>
+
+      <label>
+        Actividad
+        <input class="input" formControlName="tipoActividad" />
+      </label>
+
+      <div class="row2">
+        <label>
+          Lon
+          <input class="input" type="number" step="0.000001" formControlName="lon" />
+          <small class="err" *ngIf="fieldError('finca.lon')">{{ fieldError('finca.lon') }}</small>
+        </label>
+
+        <label>
+          Lat
+          <input class="input" type="number" step="0.000001" formControlName="lat" />
+          <small class="err" *ngIf="fieldError('finca.lat')">{{ fieldError('finca.lat') }}</small>
+        </label>
+      </div>
+
+      <label>
+        Vereda (código corto)
+        <input class="input" formControlName="veredaCodigo" />
+      </label>
+    </fieldset>
+
+    <!-- CULTIVOS: AGREGAR -->
+    <fieldset class="box">
+      <legend>Agregar Cultivo</legend>
+
+      <button type="button" class="btn btn--secondary" (click)="addCultivoNuevo()" [disabled]="loading()">
+        + Agregar cultivo
+      </button>
+
+      <div formArrayName="cultivosAgregar" class="cultivos">
+        <div *ngFor="let c of cultivosAgregar.controls; let i = index" [formGroupName]="i" class="cultivo">
+          <label>
+            Nombre
+            <input class="input" formControlName="nombreCultivo" />
+            <small class="err" *ngIf="(submitted || c.get('nombreCultivo')?.touched) && c.get('nombreCultivo')?.invalid">
+              El nombre es obligatorio.
+            </small>
+          </label>
+
+          <label>
+            Variedad
+            <input class="input" formControlName="variedad" />
+          </label>
+
+          <label>
+            Área (ha)
+            <input class="input" type="number" step="0.01" formControlName="area" />
+            <small class="err" *ngIf="(submitted || c.get('area')?.touched) && c.get('area')?.invalid">
+              El área debe ser 0 o mayor.
+            </small>
+          </label>
+
+          <button type="button" class="btn btn--danger" (click)="removeCultivoNuevo(i)" [disabled]="loading()">
+            Quitar
+          </button>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- CULTIVOS: ACTUALIZAR / ELIMINAR -->
+    <fieldset class="box">
+      <legend>Cultivos — Actualizar / Eliminar</legend>
+
+      <div formArrayName="cultivosActualizar" class="cultivos">
+        <div *ngFor="let c of cultivosActualizar.controls; let i = index" [formGroupName]="i" class="cultivo cult-update">
+
+          <label>
+            Nombre
+            <input class="input" formControlName="nombreCultivo" />
+          </label>
+
+          <label>
+            Variedad
+            <input class="input" formControlName="variedad" />
+          </label>
+
+          <label>
+            Área (ha)
+            <input class="input" type="number" step="0.01" formControlName="area" />
+            <small class="err" *ngIf="(submitted || c.get('area')?.touched) && c.get('area')?.invalid">
+              El área debe ser 0 o mayor.
+            </small>
+          </label>
+
+          <div class="row-actions">
+            <button
+              type="button"
+              class="btn btn--danger"
+              (click)="eliminarCultivo(c.value.id)"
+              [disabled]="!c.value.id || loading()"
+            >
+              Eliminar cultivo
+            </button>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </form>
+</section>

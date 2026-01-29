@@ -1,0 +1,121 @@
+<!-- src/app/estadisticas/estadisticas.html -->
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h2 class="title">Estadísticas y análisis</h2>
+      <p class="sub">Panel de indicadores y distribución productiva (cultivos y productores).</p>
+    </div>
+
+    <button class="btn" type="button" (click)="exportarPdf()" [disabled]="!loaded || exporting">
+      {{ exporting ? 'Generando…' : 'Exportar PDF' }}
+    </button>
+  </div>
+
+  <!-- Todo lo que esté dentro se exporta -->
+  <div #pdfArea class="pdf-area">
+    <!-- Header PDF -->
+    <div class="pdf-header">
+      <div class="pdf-brand">
+        <img class="pdf-logo" src="/images/logo-nimaima.svg" alt="Logo Alcaldía de Nimaima" />
+        <div>
+          <div class="pdf-title">PLAGEOPA</div>
+          <div class="pdf-subtitle">Reporte de estadísticas</div>
+        </div>
+      </div>
+
+      <div class="pdf-meta">
+        <div><strong>Fecha:</strong> {{ exportDate }}</div>
+      </div>
+    </div>
+
+    <ng-container *ngIf="loaded; else loadingBlock">
+      <!-- KPIs -->
+      <div class="kpis">
+        <div class="kpi">
+          <div class="kpi__label">Fincas</div>
+          <div class="kpi__value">{{ kpiFincas }}</div>
+        </div>
+
+        <div class="kpi">
+          <div class="kpi__label">Área total fincas (ha)</div>
+          <div class="kpi__value">{{ kpiAreaTotal | number:'1.0-2' }}</div>
+        </div>
+
+        <div class="kpi">
+          <div class="kpi__label">Área cultivada (ha)</div>
+          <div class="kpi__value">{{ kpiAreaCultivada | number:'1.0-2' }}</div>
+        </div>
+
+        <div class="kpi">
+          <div class="kpi__label">Uso del suelo (%)</div>
+          <div class="kpi__value">{{ kpiUsoSueloPct | number:'1.0-2' }}</div>
+        </div>
+
+        <div class="kpi">
+          <div class="kpi__label">Promedio área por finca (ha)</div>
+          <div class="kpi__value">{{ kpiPromArea | number:'1.0-2' }}</div>
+        </div>
+
+        <div class="kpi">
+          <div class="kpi__label">Cultivos únicos</div>
+          <div class="kpi__value">{{ kpiCultivosUnicos }}</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="grid">
+        <div class="card">
+          <h3>Top 10 cultivos por área (ha)</h3>
+          <div class="chart">
+            <canvas #barAreaCultivo></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Top 10 cultivos por número de fincas</h3>
+          <div class="chart">
+            <canvas #barCountCultivo></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Distribución por género</h3>
+          <div class="chart">
+            <canvas #pieGenero></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Asociatividad</h3>
+          <div class="chart">
+            <canvas #pieAsociacion></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Conclusiones -->
+      <div class="card">
+        <h3>Conclusiones</h3>
+        <ul class="ins">
+          <li *ngFor="let i of insights">{{ i }}</li>
+        </ul>
+      </div>
+
+      <div class="pdf-footer">
+        PLAGEOPA · Reporte generado automáticamente
+      </div>
+    </ng-container>
+
+    <ng-template #loadingBlock>
+      <div class="card">
+        <div class="loading">
+          <span class="spinner" aria-hidden="true"></span>
+          <div>
+            <div style="font-weight:900; color: var(--text);">Cargando información</div>
+            <div style="color: var(--muted); font-size: 13px;">Consultando datos para generar el reporte.</div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>

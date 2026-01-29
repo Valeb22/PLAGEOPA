@@ -1,0 +1,150 @@
+<!-- Toasts -->
+<div class="toast-stack" *ngIf="toasts().length">
+  <div class="toast" *ngFor="let t of toasts()" [class]="'toast toast--' + t.type">
+    <div class="toast__body">
+      <strong>{{ t.title }}</strong>
+      <div class="toast__msg">{{ t.message }}</div>
+    </div>
+    <button class="toast__close" type="button" (click)="dismissToast(t.id)">✕</button>
+  </div>
+</div>
+
+<section class="card">
+  <h2 class="title">Crear registro (Productor + Finca + Cultivos)</h2>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" class="grid" novalidate>
+
+    <!-- PRODUCTOR -->
+    <fieldset formGroupName="productor" class="box">
+      <legend>Productor</legend>
+
+      <label>
+        Cédula
+        <input class="input" formControlName="cedula" inputmode="numeric" placeholder="Ej: 1020304050" />
+        <small class="err" *ngIf="fieldError('productor.cedula')">{{ fieldError('productor.cedula') }}</small>
+      </label>
+
+      <label>
+        Nombre
+        <input class="input" formControlName="nombre" placeholder="Ej: Juan Pérez" />
+        <small class="err" *ngIf="fieldError('productor.nombre')">{{ fieldError('productor.nombre') }}</small>
+      </label>
+
+      <label>
+        Teléfono
+        <input class="input" formControlName="telefono" placeholder="Opcional" />
+      </label>
+
+      <label>
+        Género
+        <select class="input" formControlName="genero">
+          <option value="Femenino">Femenino</option>
+          <option value="Masculino">Masculino</option>
+        </select>
+        <small class="err" *ngIf="fieldError('productor.genero')">{{ fieldError('productor.genero') }}</small>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" formControlName="perteneceAsociacion" />
+        <span>Pertenece a asociación</span>
+      </label>
+
+      <label class="tip">
+        Nombre asociación
+        <input class="input" formControlName="nombreAsociacion" placeholder="Si aplica" />
+        <small class="err" *ngIf="fieldError('productor.nombreAsociacion')">{{ fieldError('productor.nombreAsociacion') }}</small>
+        <span class="tip__bubble">Solo diligencia este campo si “Pertenece a asociación” está activo.</span>
+      </label>
+    </fieldset>
+
+    <!-- FINCA -->
+    <fieldset formGroupName="finca" class="box">
+      <legend>Finca</legend>
+
+      <label class="tip">
+        Área total (ha)
+        <input class="input" type="number" step="0.01" formControlName="areaTotal" />
+        <small class="err" *ngIf="fieldError('finca.areaTotal')">{{ fieldError('finca.areaTotal') }}</small>
+        <span class="tip__bubble">Área total del predio en hectáreas. Ej: 1.25</span>
+      </label>
+
+      <label class="tip">
+        Actividad
+        <input class="input" formControlName="tipoActividad" />
+        <small class="err" *ngIf="fieldError('finca.tipoActividad')">{{ fieldError('finca.tipoActividad') }}</small>
+        <span class="tip__bubble">Por defecto “Agrícola”. Puedes cambiarlo si el caso lo requiere.</span>
+      </label>
+
+      <div class="row2">
+        <label class="tip">
+          Lon
+          <input class="input" type="number" step="0.000001" formControlName="lon" placeholder="-74.423500" />
+          <small class="err" *ngIf="fieldError('finca.lon')">{{ fieldError('finca.lon') }}</small>
+          <span class="tip__bubble">Coordenada longitud (WGS84). Ej: -74.423500</span>
+        </label>
+
+        <label class="tip">
+          Lat
+          <input class="input" type="number" step="0.000001" formControlName="lat" placeholder="5.099300" />
+          <small class="err" *ngIf="fieldError('finca.lat')">{{ fieldError('finca.lat') }}</small>
+          <span class="tip__bubble">Coordenada latitud (WGS84). Ej: 5.099300</span>
+        </label>
+      </div>
+
+      <label class="tip">
+        Vereda (código corto)
+        <input class="input" formControlName="veredaCodigo" placeholder="Opcional" />
+        <span class="tip__bubble">Si no lo tienes, puedes dejarlo vacío y completarlo después.</span>
+      </label>
+    </fieldset>
+
+    <!-- CULTIVOS -->
+    <fieldset class="box">
+      <legend>Cultivos</legend>
+
+      <button type="button" class="btn btn--secondary" (click)="addCultivo()" [disabled]="loading()">
+        + Agregar cultivo
+      </button>
+
+      <div formArrayName="cultivos" class="cultivos">
+        <div *ngFor="let c of cultivos.controls; let i = index" [formGroupName]="i" class="cultivo">
+          <label>
+            Nombre
+            <input class="input" formControlName="nombreCultivo" placeholder="Ej: Café" />
+            <small class="err" *ngIf="(submitted || c.get('nombreCultivo')?.touched) && c.get('nombreCultivo')?.invalid">
+              El nombre del cultivo es obligatorio.
+            </small>
+          </label>
+
+          <label>
+            Variedad
+            <input class="input" formControlName="variedad" placeholder="Opcional" />
+          </label>
+
+          <label>
+            Área (ha)
+            <input class="input" type="number" step="0.01" formControlName="area" />
+            <small class="err" *ngIf="(submitted || c.get('area')?.touched) && c.get('area')?.invalid">
+              El área debe ser 0 o mayor.
+            </small>
+          </label>
+
+          <button type="button" class="btn btn--danger" (click)="removeCultivo(i)" [disabled]="loading()">
+            Quitar
+          </button>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- ACTIONS -->
+    <div class="actions">
+      <button class="btn btn--primary" type="submit" [disabled]="loading()">
+        <span *ngIf="!loading()">Guardar</span>
+        <span *ngIf="loading()">
+          <span class="spinner" aria-hidden="true"></span>
+          Guardando…
+        </span>
+      </button>
+    </div>
+  </form>
+</section>

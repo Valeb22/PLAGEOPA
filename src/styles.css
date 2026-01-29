@@ -1,0 +1,12 @@
+:root{
+  --gov-blue:#2F5FD7;   /* barra superior */
+  --deep-blue:#0E3A6D;  /* tarjetas y botones */
+  --light-bg:#F5F7FB;   /* fondo */
+  --text-dark:#0F172A;
+  --text-light:#FFFFFF;
+  --focus:#7FB3FF;
+}
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{ margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; color:var(--text-dark); background:var(--light-bg); }
+:focus-visible{ outline:3px solid var(--focus); outline-offset:2px; }

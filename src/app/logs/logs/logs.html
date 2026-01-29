@@ -1,0 +1,86 @@
+<!-- src/app/logs/logs.html -->
+<section class="page">
+  <section class="card">
+    <header class="header">
+      <div>
+        <h2 class="title">Logs</h2>
+        <p class="subtitle">Consulta el historial de cambios y exporta el reporte a Excel.</p>
+      </div>
+    </header>
+
+    <form class="row" (ngSubmit)="load()" novalidate>
+      <div class="field">
+        <span class="field__label">Desde</span>
+        <input class="input" id="from" name="from" type="date" [(ngModel)]="start" required autocomplete="off" />
+      </div>
+
+      <div class="field">
+        <span class="field__label">Hasta</span>
+        <input class="input" id="to" name="to" type="date" [(ngModel)]="end" required autocomplete="off" />
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn btn--primary" [disabled]="loading || !start || !end">
+          <span *ngIf="!loading">Buscar</span>
+          <span *ngIf="loading"><span class="spinner" aria-hidden="true"></span>Consultando…</span>
+        </button>
+
+        <button type="button" class="btn btn--secondary" (click)="exportarExcel()" [disabled]="loading || !start || !end">
+          Exportar Excel
+        </button>
+      </div>
+    </form>
+
+    <div class="meta">
+      <span class="muted" *ngIf="!loading && items?.length">Mostrando {{ items.length }} registro(s).</span>
+      <span class="muted" *ngIf="!loading && !items?.length">No hay registros para el rango seleccionado.</span>
+    </div>
+
+    <div class="loading" *ngIf="loading">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>Consultando…</span>
+    </div>
+
+    <div class="tablewrap" *ngIf="!loading && items?.length; else empty">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>Tabla</th>
+            <th>Operación</th>
+            <th>ID afectado</th>
+            <th>Detalle</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let it of items">
+            <td>{{ it.fecha_hora | date:'yyyy-MM-dd HH:mm' }}</td>
+            <td>{{ it.usuario_nombre || '-' }}</td>
+            <td>{{ it.tabla_afectada || '-' }}</td>
+
+            <td>
+              <span class="badge"
+                    [ngClass]="badgeClass(it.operacion)">
+                {{ it.operacion || 'N/A' }}
+              </span>
+            </td>
+
+            <td>{{ it.id_registro_afectado ?? '—' }}</td>
+
+            <td class="detail">
+              {{ it.detalle || '—' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #empty>
+      <div class="empty">
+        Sin registros para el rango seleccionado.
+      </div>
+    </ng-template>
+  </section>
+</section>

@@ -1,0 +1,49 @@
+<div class="page">
+  <aside class="filters">
+    <h3 class="filters__title">Filtros</h3>
+
+    <div class="field">
+      <label>Cédula (contiene)</label>
+      <input [(ngModel)]="fCedula" inputmode="numeric" placeholder="Ej: 1020" />
+    </div>
+
+    <div class="field" style="position:relative;">
+      <label>Cultivo (exacto, sin importar tildes)</label>
+      <input
+        [(ngModel)]="fCultivo"
+        placeholder="Ej: Café / Plátano / Maíz"
+        (input)="onCultivoTyping()"
+        (focus)="showCultivoSug = true; updateCultivoSuggestions()"
+        (blur)="onCultivoBlur()"
+        autocomplete="off"
+      />
+
+      <div class="suggest" *ngIf="showCultivoSug && cultivoSug.length">
+        <button
+          type="button"
+          class="suggest-item"
+          *ngFor="let s of cultivoSug; trackBy: trackByString"
+          (mousedown)="pickCultivoSuggestion(s)"
+        >
+          {{ s }}
+        </button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn--primary" (click)="consultar()">Consultar</button>
+      <button type="button" class="btn btn--secondary" (click)="limpiar()">Limpiar</button>
+    </div>
+
+    <div class="count" *ngIf="resultCount !== null">
+      {{ resultCount }} resultado(s)
+    </div>
+  </aside>
+
+  <div
+    leaflet
+    class="map"
+    [leafletOptions]="options"
+    (leafletMapReady)="onMapReady($event)"
+  ></div>
+</div>

@@ -1,0 +1,129 @@
+<!-- src/app/login/login.html -->
+<main class="page">
+  <!-- Fondo -->
+  <div class="bg" aria-hidden="true">
+    <div class="bg__gradient"></div>
+    <div class="bg__grid"></div>
+    <div class="bg__orb orb--1"></div>
+    <div class="bg__orb orb--2"></div>
+  </div>
+
+  <section class="card" [class.card--loading]="loading()">
+    <div class="scanline" aria-hidden="true"></div>
+
+    <div class="card__header">
+      <img
+        src="/images/logo-nimaima.svg"
+        alt="Logo Alcaldía de Nimaima"
+        class="logo"
+      />
+      <h1 class="title">PLAGEOPA</h1>
+      <p class="subtitle">Iniciar sesión · Plataforma de Georreferenciación</p>
+    </div>
+
+    <!-- Error general -->
+    @if (authError()) {
+      <div class="alert alert--error" role="alert" aria-live="polite">
+        <strong>No se pudo iniciar sesión.</strong>
+        <span>{{ authError() }}</span>
+      </div>
+    }
+
+    <form
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      class="form"
+      novalidate
+    >
+      <!-- Usuario -->
+      <label
+        class="field"
+        [class.field--invalid]="submitted && form.controls['username'].invalid"
+      >
+        <span class="field__label">Usuario</span>
+        <div class="field__control">
+          <input
+            type="text"
+            formControlName="username"
+            autocomplete="username"
+            required
+            aria-describedby="err-username"
+          />
+        </div>
+        @if (submitted && form.controls['username'].invalid) {
+          <small id="err-username" class="err">
+            El usuario es obligatorio.
+          </small>
+        }
+      </label>
+
+      <!-- Contraseña -->
+      <label
+        class="field"
+        [class.field--invalid]="submitted && form.controls['password'].invalid"
+      >
+        <span class="field__label">Contraseña</span>
+        <div class="field__control">
+          <input
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            required
+            aria-describedby="err-password"
+          />
+        </div>
+        @if (submitted && form.controls['password'].invalid) {
+          <small id="err-password" class="err">
+            La contraseña es obligatoria.
+          </small>
+        }
+      </label>
+
+      <!-- Acción secundaria (SIN tooltip) -->
+      <div class="row row--between">
+        <a href="#" class="link" (click)="onForgot($event)">
+          ¿Olvidaste tu contraseña?
+        </a>
+      </div>
+
+      <!-- Botón principal -->
+      <button
+        class="btn"
+        type="submit"
+        [disabled]="form.invalid || loading()"
+      >
+        <span class="btn__glow" aria-hidden="true"></span>
+        @if (!loading()) {
+          <span class="btn__text">Ingresar</span>
+        } @else {
+          <span class="spinner" aria-hidden="true"></span>
+          Procesando…
+        }
+      </button>
+    </form>
+
+    <p class="foot">
+      © {{ year }} Alcaldía de Nimaima · Grupo TIC
+    </p>
+  </section>
+
+  <!-- Toasts -->
+  <div class="toast-stack" aria-live="polite" aria-atomic="true">
+    @for (t of toasts(); track t.id) {
+      <div class="toast" [class]="'toast toast--' + t.type">
+        <div class="toast__body">
+          <strong>{{ t.title }}</strong>
+          <div class="toast__msg">{{ t.message }}</div>
+        </div>
+        <button
+          type="button"
+          class="toast__close"
+          (click)="dismissToast(t.id)"
+          aria-label="Cerrar"
+        >
+          
+        </button>
+      </div>
+    }
+  </div>
+</main>

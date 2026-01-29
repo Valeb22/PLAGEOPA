@@ -1,0 +1,303 @@
+<!-- src/app/admin/admin-usuarios/admin-usuarios.html -->
+<section class="page">
+  <section class="card" [class.card--loading]="loading()">
+    <header class="card__header">
+      <div class="card__title">
+        <h2>Gestión de usuarios</h2>
+        <p class="card__subtitle">Administración de cuentas, roles y restablecimiento de contraseñas.</p>
+      </div>
+
+      <div class="card__actions">
+        <button class="btn btn--secondary tip" type="button" (click)="cargarUsuarios()" [disabled]="loading()">
+          <span class="btn__text">Recargar</span>
+          <span class="tip__bubble" role="tooltip">Actualiza el listado desde el servidor.</span>
+        </button>
+      </div>
+    </header>
+
+    @if (pageMessage()) {
+      <div class="alert" [class]="'alert alert--' + pageMessage()!.type" role="alert" aria-live="polite">
+        <strong>{{ pageMessage()!.title }}</strong>
+        <span>{{ pageMessage()!.message }}</span>
+      </div>
+    }
+
+    <div class="grid">
+      <!-- CREAR USUARIO -->
+      <section class="panel">
+        <header class="panel__header">
+          <h3>Crear usuario</h3>
+          <p>Registra un usuario y asigna su rol inicial.</p>
+        </header>
+
+        <form [formGroup]="formCreate" (ngSubmit)="onCreate()" class="form" novalidate>
+          <label class="field" [class.field--invalid]="isInvalid(formCreate,'username')">
+            <span class="field__label">Usuario</span>
+            <div class="field__control">
+              <span class="field__icon" aria-hidden="true"></span>
+              <input
+                type="text"
+                formControlName="username"
+                placeholder="Ej: juan123"
+                aria-describedby="err-create-username"
+                autocomplete="off"
+              />
+            </div>
+            @if (isInvalid(formCreate,'username')) {
+              <small id="err-create-username" class="err">Usuario requerido (mínimo 3 caracteres).</small>
+            }
+          </label>
+
+          <label class="field" [class.field--invalid]="isInvalid(formCreate,'email')">
+            <span class="field__label">Correo</span>
+            <div class="field__control">
+              <span class="field__icon" aria-hidden="true"></span>
+              <input
+                type="email"
+                formControlName="email"
+                placeholder="Ej: juan@correo.com"
+                aria-describedby="err-create-email"
+                autocomplete="email"
+              />
+            </div>
+            @if (isInvalid(formCreate,'email')) {
+              <small id="err-create-email" class="err">Correo válido requerido.</small>
+            }
+          </label>
+
+          <label class="field" [class.field--invalid]="isInvalid(formCreate,'password')">
+            <span class="field__label">Contraseña temporal</span>
+            <div class="field__control">
+              <span class="field__icon" aria-hidden="true"></span>
+              <input
+                type="text"
+                formControlName="password"
+                placeholder="Mínimo 6 caracteres"
+                aria-describedby="err-create-password"
+                autocomplete="new-password"
+              />
+            </div>
+            @if (isInvalid(formCreate,'password')) {
+              <small id="err-create-password" class="err">Contraseña requerida (mínimo 6 caracteres).</small>
+            }
+          </label>
+
+          <label class="field" [class.field--invalid]="isInvalid(formCreate,'rol')">
+            <span class="field__label">Rol</span>
+            <div class="field__control">
+              <span class="field__icon" aria-hidden="true"></span>
+              <select formControlName="rol">
+                <option value="USER">USER</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
+          </label>
+
+          <div class="actions actions--end">
+            <button class="btn btn--primary" type="submit" [disabled]="loading()">
+              @if (!loading()) { <span class="btn__text">Crear usuario</span> }
+              @else { <span class="spinner" aria-hidden="true"></span> Procesando… }
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- RESET PASSWORD -->
+      <section class="panel">
+        <header class="panel__header">
+          <h3>Reset de contraseña</h3>
+          <p>Asigna una contraseña temporal y fuerza el cambio al ingresar.</p>
+        </header>
+
+        <form [formGroup]="formReset" (ngSubmit)="onReset()" class="form" novalidate>
+          <label class="field" [class.field--invalid]="isInvalid(formReset,'userId')">
+            <span class="field__label">ID Usuario</span>
+            <div class="field__control">
+              <span class="field__icon" aria-hidden="true"></span>
+              <input
+                type="number"
+                formControlName="userId"
+                placeholder="Selecciona desde la lista o escribe el ID"
+                aria-describedby="err-reset-userId"
+              />
+            </div>
+            @if (isInvalid(formReset,'userId')) {
+              <small id="err-reset-userId" class="err">El ID de usuario es obligatorio.</small>
+            }
+          </label>
+
+          <label class="field" [class.field--invalid]="isInvalid(formReset,'tempPassword')">
+            <span class="field__label">Contraseña temporal</span>
+            <div class="field__control">
+              <span class="field__icon" aria-hidden="true"></span>
+              <input
+                type="text"
+                formControlName="tempPassword"
+                placeholder="Mínimo 6 caracteres"
+                aria-describedby="err-reset-tempPassword"
+                autocomplete="new-password"
+              />
+            </div>
+            @if (isInvalid(formReset,'tempPassword')) {
+              <small id="err-reset-tempPassword" class="err">Contraseña temporal requerida (mínimo 6 caracteres).</small>
+            }
+          </label>
+
+          <label class="check">
+            <input
+              type="checkbox"
+              [checked]="mustChangePassword()"
+              (change)="mustChangePassword.set(($any($event.target)).checked)"
+              [disabled]="loading()"
+            />
+            <span>Obligar a cambiar contraseña al iniciar sesión</span>
+          </label>
+
+          <div class="actions actions--between">
+            <button
+              class="btn btn--ghost tip"
+              type="button"
+              (click)="setResetFromSelected()"
+              [disabled]="loading() || !selectedUser()"
+            >
+              <span class="btn__text">Usar seleccionado</span>
+              <span class="tip__bubble" role="tooltip">Copia el ID del usuario seleccionado en el formulario.</span>
+            </button>
+
+            <button class="btn btn--danger" type="submit" [disabled]="loading()">
+              @if (!loading()) { <span class="btn__text">Reset</span> }
+              @else { <span class="spinner" aria-hidden="true"></span> Procesando… }
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- LISTADO -->
+      <section class="panel panel--full">
+        <header class="panel__header panel__header--row">
+          <div>
+            <h3>Usuarios</h3>
+            <p>Selecciona un usuario para preparar el reset o revisar su rol.</p>
+          </div>
+
+          <div class="listbar">
+            <div class="search">
+              <span class="search__icon" aria-hidden="true"></span>
+              <input
+                type="text"
+                [value]="filtro()"
+                (input)="filtro.set(($any($event.target)).value)"
+                placeholder="Filtrar por usuario / correo / id"
+                [disabled]="loading()"
+              />
+            </div>
+          </div>
+        </header>
+
+        <div class="tablewrap" role="region" aria-label="Listado de usuarios">
+          @if (loading() && users().length === 0) {
+            <div class="skeleton">
+              <div class="skeleton__bar"></div>
+              <div class="skeleton__bar"></div>
+              <div class="skeleton__bar"></div>
+            </div>
+          } @else {
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Usuario</th>
+                  <th>Correo</th>
+                  <th>Rol</th>
+                  <th class="th-actions">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="let u of usersFiltrados()"
+                  (click)="selectUser(u)"
+                  [class.row--selected]="selectedUser()?.id === u.id"
+                  tabindex="0"
+                  (keydown.enter)="selectUser(u)"
+                >
+                  <td>{{ u.id }}</td>
+                  <td class="mono">{{ u.username }}</td>
+                  <td>{{ u.email }}</td>
+                  <td>
+                    <span class="pill" [class.pill--admin]="(u.rol || '').toUpperCase() === 'ADMIN'">{{ u.rol }}</span>
+                  </td>
+                  <td class="td-actions">
+                    <button
+                      class="btn btn--secondary tip"
+                      type="button"
+                      (click)="setResetFromUser(u); $event.stopPropagation()"
+                      [disabled]="loading()"
+                    >
+                      <span class="btn__text">Usar en reset</span>
+                      <span class="tip__bubble" role="tooltip">Carga el ID en el formulario de reset.</span>
+                    </button>
+
+                    <button
+                      class="btn btn--danger tip"
+                      type="button"
+                      (click)="askDelete(u); $event.stopPropagation()"
+                      [disabled]="loading()"
+                    >
+                      <span class="btn__text">Eliminar</span>
+                      <span class="tip__bubble" role="tooltip">Elimina definitivamente el usuario.</span>
+                    </button>
+                  </td>
+                </tr>
+
+                <tr *ngIf="usersFiltrados().length === 0">
+                  <td colspan="5" class="muted">No hay usuarios (o el filtro no coincide).</td>
+                </tr>
+              </tbody>
+            </table>
+          }
+        </div>
+      </section>
+    </div>
+
+    <!-- Modal confirmación eliminar -->
+    @if (confirmDeleteOpen()) {
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Confirmar eliminación">
+        <div class="modal__backdrop" (click)="closeConfirmDelete()"></div>
+        <div class="modal__panel">
+          <h3>Confirmar eliminación</h3>
+          <p>
+            ¿Deseas eliminar el usuario <strong>{{ pendingDelete()?.username }}</strong> (ID {{ pendingDelete()?.id }})?
+          </p>
+          <p class="modal__warn">Esta acción no se puede deshacer.</p>
+
+          <div class="actions actions--end">
+            <button class="btn btn--secondary" type="button" (click)="closeConfirmDelete()" [disabled]="loading()">
+              Cancelar
+            </button>
+            <button class="btn btn--danger" type="button" (click)="confirmDelete()" [disabled]="loading()">
+              @if (!loading()) { <span class="btn__text">Eliminar</span> }
+              @else { <span class="spinner" aria-hidden="true"></span> Procesando… }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <footer class="foot">
+      <span class="muted">Acceso restringido: solo personal autorizado (ADMIN).</span>
+    </footer>
+  </section>
+
+  <!-- Toasts -->
+  <div class="toast-stack" aria-live="polite" aria-atomic="true">
+    @for (t of toasts(); track t.id) {
+      <div class="toast" [class]="'toast toast--' + t.type">
+        <div class="toast__body">
+          <strong>{{ t.title }}</strong>
+          <div class="toast__msg">{{ t.message }}</div>
+        </div>
+        <button type="button" class="toast__close" (click)="dismissToast(t.id)" aria-label="Cerrar">✕</button>
+      </div>
+    }
+  </div>
+</section>
