@@ -4,7 +4,7 @@
   <header class="page__bar">
     <div class="page__title">
       <h2>Consulta de productor</h2>
-      <p>Consulta de información registrada por cédula.</p>
+      <p>Consulta de información registrada por cédula o listado paginado.</p>
     </div>
   </header>
 
@@ -20,24 +20,22 @@
             [(ngModel)]="cedula"
             placeholder="Ej: 1234567890"
             autocomplete="off"
-            required
             [disabled]="loading"
           />
-          <small class="help">Digite solo números, sin puntos ni espacios.</small>
+          <small class="help">Si dejas vacío y das “Consultar”, se listarán registros.</small>
         </div>
 
         <div class="actions">
-          <button class="btn btn--primary" type="submit" [disabled]="loading || !cedula">
+          <button class="btn btn--primary" type="submit" [disabled]="loading">
             <span *ngIf="!loading">Consultar</span>
-            <span *ngIf="loading">Consultando…</span>
+            <span *ngIf="loading">Cargando…</span>
           </button>
 
-          <button
-            class="btn btn--secondary"
-            type="button"
-            (click)="cedula=''; reg=null; error=null; tried=false"
-            [disabled]="loading"
-          >
+          <button class="btn btn--secondary" type="button" (click)="listar(true)" [disabled]="loading">
+            Listar todos
+          </button>
+
+          <button class="btn btn--secondary" type="button" (click)="limpiar()" [disabled]="loading">
             Limpiar
           </button>
         </div>
@@ -49,26 +47,76 @@
   <section *ngIf="loading" class="card status" aria-live="polite">
     <span class="spinner" aria-hidden="true"></span>
     <div>
-      <div class="status__title">Consultando información</div>
+      <div class="status__title">Cargando información</div>
       <div class="status__text">Por favor espere…</div>
     </div>
   </section>
 
   <!-- Estado: error -->
-  <section *ngIf="error" class="card alert" role="alert">
+  <section *ngIf="!loading && error" class="card alert" role="alert">
     <div class="alert__title">No fue posible completar la consulta</div>
     <div class="alert__text">{{ error }}</div>
   </section>
 
-  <!-- Estado: sin resultados -->
-  <section *ngIf="!loading && !error && tried && !reg" class="card empty" role="status">
-    <div class="empty__title">Sin resultados</div>
-    <div class="empty__text">
-      No se encontraron registros para la cédula <strong>{{ cedula }}</strong>.
+  <!-- Tabla paginada -->
+  <section *ngIf="!loading && pageData?.content?.length" class="card">
+    <header class="result__head">
+      <h3>Registros</h3>
+      <div class="result__meta">
+        <span><strong>Total:</strong> {{ pageData?.totalElements }}</span>
+        <span><strong>Página:</strong> {{ (pageData?.page ?? 0) + 1 }} / {{ pageData?.totalPages }}</span>
+      </div>
+    </header>
+
+    <div class="actions" style="margin:10px 0;">
+      <button class="btn btn--secondary" type="button" (click)="prev()"
+        [disabled]="(pageData?.page ?? 0) <= 0 || loading">
+        Anterior
+      </button>
+
+      <button class="btn btn--secondary" type="button" (click)="next()"
+        [disabled]="(pageData?.page ?? 0) + 1 >= (pageData?.totalPages ?? 0) || loading">
+        Siguiente
+      </button>
+    </div>
+
+    <div class="tablewrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Cédula</th>
+            <th>Productor</th>
+            <th>Finca (ha)</th>
+            <th># Cultivos</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of pageData?.content">
+            <td>{{ r.productor?.cedula }}</td>
+            <td>{{ r.productor?.nombre }}</td>
+            <td>{{ r.finca?.areaTotal ?? '—' }}</td>
+            <td>{{ r.cultivos?.length ?? 0 }}</td>
+            <td>
+              <button class="btn btn--primary" type="button" (click)="verDetalle(r.productor.cedula)">
+                Ver detalle
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </section>
 
-  <!-- Resultado -->
+  <!-- Estado: sin resultados -->
+  <section *ngIf="!loading && !error && tried && !reg && (!pageData || !pageData.content?.length)" class="card empty" role="status">
+    <div class="empty__title">Sin resultados</div>
+    <div class="empty__text">
+      No se encontraron registros.
+    </div>
+  </section>
+
+  <!-- Resultado (detalle) -->
   <section *ngIf="reg && !loading" class="card result">
     <header class="result__head">
       <h3 class="result__name">{{ reg.productor.nombre }}</h3>
@@ -87,35 +135,17 @@
         <h4 class="panel__title">Datos del productor</h4>
 
         <dl class="kv">
-          <div class="kv__row">
-            <dt>Nombre</dt>
-            <dd>{{ reg.productor.nombre || '—' }}</dd>
-          </div>
+          <div class="kv__row"><dt>Nombre</dt><dd>{{ reg.productor.nombre || '—' }}</dd></div>
+          <div class="kv__row"><dt>Cédula</dt><dd>{{ reg.productor.cedula || '—' }}</dd></div>
+          <div class="kv__row"><dt>Teléfono</dt><dd>{{ reg.productor.telefono || '—' }}</dd></div>
+          <div class="kv__row"><dt>Género</dt><dd>{{ reg.productor.genero || '—' }}</dd></div>
 
-          <div class="kv__row">
-            <dt>Cédula</dt>
-            <dd>{{ reg.productor.cedula || '—' }}</dd>
-          </div>
-
-          <div class="kv__row">
-            <dt>Teléfono</dt>
-            <dd>{{ reg.productor.telefono || '—' }}</dd>
-          </div>
-
-          <div class="kv__row">
-            <dt>Género</dt>
-            <dd>{{ reg.productor.genero || '—' }}</dd>
-          </div>
-
-          <!-- ASOCIACIÓN CON CONTEXTO -->
           <div class="kv__row">
             <dt>Asociación</dt>
             <dd>
-              <span
-                class="tag"
+              <span class="tag"
                 [class.tag--ok]="reg.productor.perteneceAsociacion"
-                [class.tag--no]="!reg.productor.perteneceAsociacion"
-              >
+                [class.tag--no]="!reg.productor.perteneceAsociacion">
                 {{ reg.productor.perteneceAsociacion
                     ? (reg.productor.nombreAsociacion || 'Asociado')
                     : 'No asociado' }}
@@ -130,25 +160,10 @@
         <h4 class="panel__title">Datos de la finca</h4>
 
         <dl class="kv">
-          <div class="kv__row">
-            <dt>Área total (ha)</dt>
-            <dd>{{ reg.finca?.areaTotal ?? '—' }}</dd>
-          </div>
-
-          <div class="kv__row">
-            <dt>Actividad</dt>
-            <dd>{{ reg.finca?.tipoActividad || '—' }}</dd>
-          </div>
-
-          <div class="kv__row">
-            <dt>Ubicación (lat, lon)</dt>
-            <dd>{{ reg.finca?.lat ?? '—' }}, {{ reg.finca?.lon ?? '—' }}</dd>
-          </div>
-
-          <div class="kv__row">
-            <dt>Vereda</dt>
-            <dd>{{ reg.finca?.veredaCodigo || '—' }}</dd>
-          </div>
+          <div class="kv__row"><dt>Área total (ha)</dt><dd>{{ reg.finca?.areaTotal ?? '—' }}</dd></div>
+          <div class="kv__row"><dt>Actividad</dt><dd>{{ reg.finca?.tipoActividad || '—' }}</dd></div>
+          <div class="kv__row"><dt>Ubicación (lat, lon)</dt><dd>{{ reg.finca?.lat ?? '—' }}, {{ reg.finca?.lon ?? '—' }}</dd></div>
+          <div class="kv__row"><dt>Vereda</dt><dd>{{ reg.finca?.veredaCodigo || '—' }}</dd></div>
         </dl>
       </section>
     </div>

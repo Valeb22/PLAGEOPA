@@ -25,6 +25,10 @@ import { ApiService } from './services/api';
         <img src="assets/nav/crear.jpg" alt="Crear" />
         <span>Crear</span>
       </a>
+<a routerLink="/carga-masiva" routerLinkActive="active" class="tab" title="Carga masiva" aria-label="Carga masiva">
+  <img src="assets/nav/cargar.png" alt="Carga masiva" />
+  <span>Carga masiva</span>
+</a>
 
       <a
         routerLink="/registro/editar"

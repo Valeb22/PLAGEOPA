@@ -8,6 +8,8 @@ import { BuscarComponent } from './buscar/buscar/buscar';
 import { EstadisticasComponent } from './estadisticas/estadisticas';
 import { AdminUsuariosComponent } from './admin-usuarios/admin-usuarios';
 import { ChangePasswordComponent } from './change-password/change-password';
+import { CargaMasivaComponent } from './carga-masiva/carga-masiva';
+
 
 import { authGuard } from './auth-guard';
 import { adminGuard } from './admin-guard';
@@ -26,6 +28,8 @@ export const routes: Routes = [
   { path: 'estadisticas', component: EstadisticasComponent, canActivate: [authGuard] },
   { path: 'logs', component: LogsComponent, canActivate: [authGuard] },
   { path: 'buscar', component: BuscarComponent, canActivate: [authGuard] },
+  { path: 'carga-masiva', component: CargaMasivaComponent, canActivate: [authGuard] },
+
 
   // admin
   { path: 'admin/usuarios', component: AdminUsuariosComponent, canActivate: [authGuard, adminGuard] },

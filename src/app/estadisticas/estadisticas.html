@@ -93,6 +93,45 @@
         </div>
       </div>
 
+      
+<div class="card" *ngIf="cultivosShareRows.length">
+  <h3>Participación por cultivo ( {{ cultivosShareRows.length }})</h3>
+
+  <div class="table-wrap">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Cultivo</th>
+          <th style="text-align:right;">Productores</th>
+          <th style="text-align:right;">% Prod.</th>
+          <th style="text-align:right;">Fincas</th>
+          <th style="text-align:right;">% Fincas</th>
+          <th style="text-align:right;">Área (ha)</th>
+          <th style="text-align:right;">% Área</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of cultivosShareRows">
+          <td>{{ r.cultivoPretty }}</td>
+          <td style="text-align:right;">{{ r.productores }}</td>
+          <td style="text-align:right;">{{ r.productoresPct | number:'1.0-1' }}%</td>
+          <td style="text-align:right;">{{ r.fincas }}</td>
+          <td style="text-align:right;">{{ r.fincasPct | number:'1.0-1' }}%</td>
+          <td style="text-align:right;">{{ r.areaHa | number:'1.0-2' }}</td>
+          <td style="text-align:right;">{{ r.areaPct | number:'1.0-1' }}%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card" *ngIf="cultivosShareRows.length">
+  <h3>Participación por área (Top 10)</h3>
+  <div class="chart">
+    <canvas #barShareArea></canvas>
+  </div>
+</div>
+
       <!-- Conclusiones -->
       <div class="card">
         <h3>Conclusiones</h3>

@@ -1,0 +1,64 @@
+<section class="card">
+  <div class="head">
+    <div>
+      <h2 class="title">Carga masiva (Excel)</h2>
+      <p class="sub">Descarga plantilla, sube archivo, previsualiza errores y luego importa.</p>
+    </div>
+
+    <button class="btn btn--secondary" type="button" (click)="descargarPlantilla()">
+      Descargar plantilla
+    </button>
+  </div>
+
+  <div class="row">
+    <input type="file" accept=".xlsx" (change)="onFileChange($event)" />
+    <button class="btn" type="button" (click)="previsualizar()" [disabled]="!file || loading">
+      Previsualizar
+    </button>
+    <button class="btn btn--primary" type="button" (click)="importar()" [disabled]="!preview || loading">
+      Importar
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="muted">Procesando…</div>
+
+  <div *ngIf="preview" class="summary">
+    <div><strong>Filas:</strong> {{ preview.totalRows }}</div>
+    <div><strong>OK:</strong> {{ preview.okRows }}</div>
+    <div><strong>Con error:</strong> {{ preview.errorRows }}</div>
+  </div>
+
+  <div *ngIf="preview" class="tablewrap">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Fila</th>
+          <th>Estado</th>
+          <th>Cédula</th>
+          <th>Productor</th>
+          <th>Cultivo</th>
+          <th>Área cultivo</th>
+          <th>Vereda</th>
+          <th>Errores</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of preview.rows" [class.bad]="!r.ok">
+          <td>{{ r.rowNum }}</td>
+          <td>{{ r.ok ? 'OK' : 'ERROR' }}</td>
+          <td>{{ r.cedula }}</td>
+          <td>{{ r.nombre }}</td>
+          <td>{{ r.nombreCultivo }}</td>
+          <td>{{ r.areaCultivo }}</td>
+          <td>{{ r.codigoVereda || '—' }}</td>
+          <td>
+            <ul *ngIf="!r.ok">
+              <li *ngFor="let e of r.errors">{{ e }}</li>
+            </ul>
+            <span *ngIf="r.ok">—</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>

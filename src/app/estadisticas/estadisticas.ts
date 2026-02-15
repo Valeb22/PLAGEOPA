@@ -21,6 +21,16 @@ function toKV(obj: any): KV[] {
   }));
 }
 
+// Opcional: embellecer nombres tipo "CAFE" -> "Café"
+function prettyCultivoName(raw: any): string {
+  const s = String(raw ?? '').trim();
+  if (!s) return '';
+  const lower = s.toLowerCase();
+  const titled = lower.replace(/\b\p{L}/gu, (m) => m.toUpperCase());
+  if (titled === 'Cafe') return 'Café';
+  return titled.replace(/_/g, ' ');
+}
+
 @Component({
   selector: 'app-estadisticas',
   standalone: true,
@@ -34,6 +44,10 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
   @ViewChild('barCountCultivo') barCountCultivo?: ElementRef<HTMLCanvasElement>;
   @ViewChild('pieGenero') pieGenero?: ElementRef<HTMLCanvasElement>;
   @ViewChild('pieAsociacion') pieAsociacion?: ElementRef<HTMLCanvasElement>;
+
+  // ✅ nuevo chart
+  @ViewChild('barShareArea') barShareArea?: ElementRef<HTMLCanvasElement>;
+
   @ViewChild('pdfArea') pdfArea?: ElementRef<HTMLDivElement>;
 
   loaded = false;
@@ -49,6 +63,19 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
   kpiUsoSueloPct = 0;
 
   insights: string[] = [];
+
+  // ✅ datos tabla participación
+  cultivosShareRows: Array<{
+    cultivo: string;
+    cultivoPretty: string;
+    productores: number;
+    productoresPct: number;
+    fincas: number;
+    fincasPct: number;
+    areaHa: number;
+    areaPct: number;
+  }> = [];
+
   private charts: Chart[] = [];
 
   constructor(private api: ApiService) {}
@@ -56,12 +83,15 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.api.getStatsReport().subscribe({
       next: (s: any) => {
-        this.kpiFincas = s.totalFincas ?? 0;
-        this.kpiAreaTotal = s.areaTotalFincas ?? 0;
-        this.kpiPromArea = s.areaPromedioPorFinca ?? 0;
-        this.kpiCultivosUnicos = s.cultivosUnicos ?? 0;
-        this.kpiAreaCultivada = s.areaTotalCultivada ?? 0;
-        this.kpiUsoSueloPct = s.usoSueloPct ?? 0;
+        this.kpiFincas = Number(s?.totalFincas ?? 0);
+        this.kpiAreaTotal = Number(s?.areaTotalFincas ?? 0);
+        this.kpiPromArea = Number(s?.areaPromedioPorFinca ?? 0);
+        this.kpiCultivosUnicos = Number(s?.cultivosUnicos ?? 0);
+        this.kpiAreaCultivada = Number(s?.areaTotalCultivada ?? 0);
+        this.kpiUsoSueloPct = Number(s?.usoSueloPct ?? 0);
+
+        // ✅ construir tabla participación
+        this.cultivosShareRows = this.buildShareRows(s);
 
         this.loaded = true;
         this.exportDate = new Date().toLocaleString('es-CO');
@@ -69,13 +99,17 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
         requestAnimationFrame(() => {
           this.destroyCharts();
 
-          this.makeBar(this.barAreaCultivo, toKV(s.topCultivosArea), 'Área (ha)');
-          this.makeBar(this.barCountCultivo, toKV(s.topCultivosFincas), 'Fincas');
+          this.makeBar(this.barAreaCultivo, toKV(s?.topCultivosArea), 'Área (ha)');
+          this.makeBar(this.barCountCultivo, toKV(s?.topCultivosFincas), 'Fincas');
 
-          this.makePie(this.pieGenero, toKV(s.generoProductores), 'Género');
-          this.makePie(this.pieAsociacion, toKV(s.asociacionProductores), 'Asociación');
+          this.makePie(this.pieGenero, toKV(s?.generoProductores), 'Género');
+          this.makePie(this.pieAsociacion, toKV(s?.asociacionProductores), 'Asociación');
 
-          this.insights = this.buildInsights(s);
+          // ✅ grafica participación por área (top 10)
+          this.makeShareAreaBar(this.barShareArea, this.cultivosShareRows.slice(0, 10));
+
+          // ✅ conclusiones cortas
+          this.insights = this.buildInsights(s, this.cultivosShareRows);
         });
       },
       error: (e) => {
@@ -136,30 +170,49 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private buildInsights(s: any): string[] {
+  private buildShareRows(s: any) {
+    const shareObj = s?.cultivosShare || {};
+    const rows = (Object.values(shareObj) as any[]).map(r => {
+      const cultivo = String(r?.cultivo ?? '');
+      return {
+        cultivo,
+        cultivoPretty: prettyCultivoName(cultivo),
+        productores: Number(r?.productores ?? 0),
+        productoresPct: Number(r?.productoresPct ?? 0),
+        fincas: Number(r?.fincas ?? 0),
+        fincasPct: Number(r?.fincasPct ?? 0),
+        areaHa: Number(r?.areaHa ?? 0),
+        areaPct: Number(r?.areaPct ?? 0),
+      };
+    });
+
+rows.sort((a, b) => b.productoresPct - a.productoresPct);
+    return rows;
+  }
+
+  // ✅ ahora conclusiones: 3–4 máximo (no lista infinita)
+  private buildInsights(s: any, shareRows: any[]): string[] {
     const ins: string[] = [];
 
-    const topArea = toKV(s.topCultivosArea).sort((a, b) => b.value - a.value);
-    if (topArea.length) {
-      const top = topArea[0];
-      const denom = (s.areaTotalCultivada ?? this.kpiAreaCultivada) || 0;
-      const pct = denom ? (top.value / denom) * 100 : 0;
-      ins.push(`Cultivo líder por área: "${top.key}" con ${top.value.toFixed(2)} ha (${pct.toFixed(1)}% del área cultivada).`);
+    const top = shareRows?.[0];
+    if (top) {
+      ins.push(`Cultivo líder: ${top.cultivoPretty} con ${top.areaHa.toFixed(2)} ha (${top.areaPct.toFixed(1)}% del área cultivada).`);
+      ins.push(`${top.cultivoPretty} está presente en ${top.fincas} fincas (${top.fincasPct.toFixed(1)}% del total de fincas).`);
     }
 
-    const topCount = toKV(s.topCultivosFincas).sort((a, b) => b.value - a.value);
-    if (topCount.length) {
-      const top = topCount[0];
-      const pct = this.kpiFincas ? (top.value / this.kpiFincas) * 100 : 0;
-      ins.push(`Cultivo más frecuente: "${top.key}" en ${top.value} fincas (~${pct.toFixed(1)}% de las fincas).`);
-    }
-
-    const uso = Number(s.usoSueloPct ?? 0);
+    const uso = Number(s?.usoSueloPct ?? 0);
     if (Number.isFinite(uso)) {
-      ins.push(`Intensidad de uso del suelo: ${uso.toFixed(1)}% (área cultivada / área total de fincas).`);
+      ins.push(`Uso del suelo: ${uso.toFixed(1)}% (área cultivada / área total de fincas).`);
     }
 
-    return ins.length ? ins : ['No hay suficientes datos para generar insights automáticos.'];
+    // concentración simple: top 2 o top 3
+    const top3 = shareRows.slice(0, 3);
+    if (top3.length >= 2) {
+      const sum = top3.reduce((acc: number, r: any) => acc + Number(r.areaPct || 0), 0);
+      ins.push(`Concentración productiva: los 3 principales cultivos representan ${sum.toFixed(1)}% del área cultivada.`);
+    }
+
+    return ins.length ? ins : ['No hay suficientes datos para generar conclusiones.'];
   }
 
   private makeBar(el?: ElementRef<HTMLCanvasElement>, data: KV[] = [], yLabel = '') {
@@ -169,7 +222,7 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const labels = data.map(d => d.key);
+    const labels = data.map(d => prettyCultivoName(d.key));
     const values = data.map(d => d.value);
 
     const chart = new Chart(ctx, {
@@ -195,6 +248,46 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
     this.charts.push(chart);
   }
 
+  private makeShareAreaBar(el?: ElementRef<HTMLCanvasElement>, rows: any[] = []) {
+    const canvas = el?.nativeElement;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const labels = rows.map(r => r.cultivoPretty);
+    const values = rows.map(r => Number(r.areaPct ?? 0)); // % área
+
+    const chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: '% área cultivada',
+          data: values,
+          backgroundColor: CHART_ORANGE,
+          borderRadius: 6,
+          maxBarThickness: 36
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: true } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: (v) => `${v}%`
+            }
+          }
+        }
+      }
+    });
+
+    this.charts.push(chart);
+  }
+
   private makePie(el?: ElementRef<HTMLCanvasElement>, data: KV[] = [], label = '') {
     const canvas = el?.nativeElement;
     if (!canvas) return;
@@ -202,7 +295,7 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const labels = data.map(d => d.key);
+    const labels = data.map(d => String(d.key));
     const values = data.map(d => d.value);
 
     const chart = new Chart(ctx, {

@@ -194,6 +194,29 @@ adminDeleteUser(id: number) {
     withCredentials: true,
   });
 }
+downloadTemplate() {
+    return this.http.get(`${this.API_BASE}/import/template.xlsx`, { responseType: 'blob' });
+  }
+
+  previewImport(file: File, limit = 200) {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<any>(`${this.API_BASE}/import/preview?limit=${limit}`, fd);
+  }
+
+  applyImport(file: File) {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<any>(`${this.API_BASE}/import/apply`, fd);
+  }
+  listProductores(limit = 50, offset = 0) {
+  return this.http.get<any[]>(`${this.API_BASE}/productores?limit=${limit}&offset=${offset}`);
+}
+listRegistros(page = 0, size = 100, q = '') {
+  const qq = encodeURIComponent(q ?? '');
+  return this.http.get<any>(`${this.API_BASE}/registro/list?page=${page}&size=${size}&q=${qq}`);
+}
+
 
 }
 
