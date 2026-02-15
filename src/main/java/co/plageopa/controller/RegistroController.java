@@ -1,6 +1,7 @@
 package co.plageopa.controller;
 
 import co.plageopa.DTO.RegistroCreateDto;
+import co.plageopa.DTO.RegistroPageResponseDto;
 import co.plageopa.DTO.RegistroResponseDto;
 import co.plageopa.DTO.RegistroUpdateDto;
 import co.plageopa.service.RegistroService;
@@ -56,6 +57,15 @@ public ResponseEntity<Void> eliminarProductor(
    @RequestHeader(value="X-User-Id", required=false) Integer userId) {
  service.eliminarProductorPorCedula(cedula, userId);
  return ResponseEntity.noContent().build();
+}
+
+@GetMapping("/list")
+public RegistroPageResponseDto list(
+    @RequestParam(defaultValue="0") int page,
+    @RequestParam(defaultValue="100") int size,
+    @RequestParam(defaultValue="") String q
+){
+  return service.listarRegistros(q, page, size);
 }
 }
 

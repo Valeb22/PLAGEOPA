@@ -77,6 +77,12 @@ public class ReportsController {
     doc.add(distTable("Género de productores", stats.generoProductores()));
     doc.add(spacer(6));
     doc.add(distTable("Pertenencia a asociación", stats.asociacionProductores()));
+    
+    doc.add(spacer(10));
+    doc.add(sectionTitle("Participación por cultivo"));
+    doc.add(spacer(6));
+    doc.add(cultivoShareTable(stats));
+
 
     doc.close();
     event.writeTotalPages(writer);
@@ -321,4 +327,35 @@ public class ReportsController {
 		      ))
 		      .body(bytes);
 		}
+		
+		private static PdfPTable cultivoShareTable(StatsReport s) {
+			  PdfPTable t = new PdfPTable(new float[]{2.6f, 1.2f, 1.2f, 1.0f, 1.2f});
+			  t.setWidthPercentage(100);
+
+			  addHeaderCell(t, "Cultivo");
+			  addHeaderCell(t, "Área (ha)");
+			  addHeaderCell(t, "% Área");
+			  addHeaderCell(t, "# Fincas");
+			  addHeaderCell(t, "% Fincas");
+
+			  var map = s.cultivosShare();
+			  if (map == null || map.isEmpty()) {
+			    PdfPCell c = new PdfPCell(new Phrase("No hay datos para mostrar."));
+			    c.setColspan(5);
+			    c.setPadding(8);
+			    c.setBorderColor(new Color(220, 220, 220));
+			    t.addCell(c);
+			    return t;
+			  }
+
+			  for (var e : map.values()) {
+			    addBodyCell(t, e.cultivo());
+			    addBodyCell(t, fmt2(e.areaHa()));
+			    addBodyCell(t, fmt2(e.areaPct()) + "%");
+			    addBodyCell(t, String.valueOf(e.fincas()));
+			    addBodyCell(t, fmt2(e.fincasPct()) + "%");
+			  }
+			  return t;
+			}
+
 }

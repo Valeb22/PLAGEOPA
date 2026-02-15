@@ -1,5 +1,6 @@
 package co.plageopa.service;
 
+import co.plageopa.DTO.CultivoShareRow;
 import co.plageopa.DTO.StatsReport;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -23,8 +24,8 @@ public class StatsService {
 
     long cultivosUnicos   = qLong("SELECT COUNT(DISTINCT UPPER(TRIM(nombre_cultivo))) FROM cultivos");
 
-    double areaTotalFincas = qDouble("SELECT COALESCE(SUM(area_total),0) FROM fincas");
-    double areaTotalCultivada = qDouble("SELECT COALESCE(SUM(area),0) FROM cultivos");
+    double areaTotalFincas     = qDouble("SELECT COALESCE(SUM(area_total),0) FROM fincas");
+    double areaTotalCultivada  = qDouble("SELECT COALESCE(SUM(area),0) FROM cultivos");
 
     double usoSueloPct = 0.0;
     if (areaTotalFincas > 0) {
@@ -88,6 +89,44 @@ public class StatsService {
       ORDER BY v DESC
     """);
 
+     LinkedHashMap<String, CultivoShareRow> cultivosShare = qCultivoShare("""
+     WITH norm AS (
+  SELECT
+    UPPER(TRIM(c.nombre_cultivo)) AS cultivo,
+    c.id_finca,
+    f.id_productor,
+    COALESCE(c.area,0) AS area
+  FROM cultivos c
+  JOIN fincas f ON f.id_finca = c.id_finca
+),
+agg AS (
+  SELECT
+    cultivo,
+    SUM(area) AS area_ha,
+    COUNT(DISTINCT id_finca) AS fincas,
+    COUNT(DISTINCT id_productor) AS productores
+  FROM norm
+  GROUP BY cultivo
+),
+tot AS (
+  SELECT
+    COALESCE((SELECT SUM(area_ha) FROM agg),0) AS total_area,
+    COALESCE((SELECT COUNT(*) FROM fincas),0) AS total_fincas, -- ✅ TODAS las fincas
+    COALESCE((SELECT COUNT(DISTINCT id_productor) FROM norm),0) AS total_productores_con_cultivo
+)
+SELECT
+  a.cultivo,
+  a.area_ha,
+  CASE WHEN t.total_area > 0 THEN (a.area_ha / t.total_area) * 100 ELSE 0 END AS area_pct,
+  a.fincas,
+  CASE WHEN t.total_fincas > 0 THEN (a.fincas::double precision / t.total_fincas) * 100 ELSE 0 END AS fincas_pct,
+  a.productores,
+  CASE WHEN t.total_productores_con_cultivo > 0 THEN (a.productores::double precision / t.total_productores_con_cultivo) * 100 ELSE 0 END AS productores_pct
+FROM agg a
+CROSS JOIN tot t
+ORDER BY a.area_ha DESC
+""");
+
     return new StatsReport(
       totalProductores,
       totalFincas,
@@ -107,12 +146,14 @@ public class StatsService {
       topCultivosFincas,
 
       generoProductores,
-      asociacionProductores
+      asociacionProductores,
+
+      cultivosShare // ✅ NUEVO
     );
   }
 
   // =========================
-  // Helpers JDBC (SIN ambigüedad)
+  // Helpers JDBC
   // =========================
 
   private long qLong(String sql) {
@@ -126,18 +167,36 @@ public class StatsService {
   }
 
   private LinkedHashMap<String, Double> qTopDouble(String sql) {
-    LinkedHashMap<String, Double> map = new LinkedHashMap<>();
-    jdbc.query(sql, (rs) -> {
-      map.put(rs.getString("k"), rs.getDouble("v"));
-    });
-    return map;
-  }
+	  LinkedHashMap<String, Double> map = new LinkedHashMap<>();
+	  jdbc.query(sql, (java.sql.ResultSet rs) -> {
+	    map.put(rs.getString("k"), rs.getDouble("v"));
+	  });
+	  return map;
+	}
 
-  private LinkedHashMap<String, Long> qTopLong(String sql) {
-    LinkedHashMap<String, Long> map = new LinkedHashMap<>();
-    jdbc.query(sql, (rs) -> {
-      map.put(rs.getString("k"), rs.getLong("v"));
-    });
-    return map;
+	private LinkedHashMap<String, Long> qTopLong(String sql) {
+	  LinkedHashMap<String, Long> map = new LinkedHashMap<>();
+	  jdbc.query(sql, (java.sql.ResultSet rs) -> {
+	    map.put(rs.getString("k"), rs.getLong("v"));
+	  });
+	  return map;
+	}
+
+
+	private LinkedHashMap<String, CultivoShareRow> qCultivoShare(String sql) {
+		  LinkedHashMap<String, CultivoShareRow> map = new LinkedHashMap<>();
+		  jdbc.query(sql, (java.sql.ResultSet rs) -> {
+		    String k = rs.getString("cultivo");
+		    map.put(k, new CultivoShareRow(
+		      k,
+		      rs.getDouble("area_ha"),
+		      rs.getDouble("area_pct"),
+		      rs.getLong("fincas"),
+		      rs.getDouble("fincas_pct"),
+		      rs.getLong("productores"),
+		      rs.getDouble("productores_pct")
+		    ));
+		  });
+		  return map;
   }
 }

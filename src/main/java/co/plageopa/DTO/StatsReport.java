@@ -21,5 +21,7 @@ public record StatsReport(
     LinkedHashMap<String, Long>   topCultivosFincas, // cultivo -> #fincas
 
     LinkedHashMap<String, Long> generoProductores,     // Masculino/Femenino
-    LinkedHashMap<String, Long> asociacionProductores  // Sí/No
+    LinkedHashMap<String, Long> asociacionProductores,  // Sí/No
+    LinkedHashMap<String, CultivoShareRow> cultivosShare
+
 ) {}

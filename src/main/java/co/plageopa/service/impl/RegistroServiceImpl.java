@@ -1,7 +1,7 @@
 package co.plageopa.service.impl;
 
-import co.plageopa.domain.*;
 import co.plageopa.DTO.*;
+import co.plageopa.domain.*;
 import co.plageopa.exception.NotFoundException;
 import co.plageopa.repository.*;
 import co.plageopa.service.RegistroService;
@@ -9,6 +9,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.locationtech.jts.geom.*;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,6 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -26,7 +29,6 @@ public class RegistroServiceImpl implements RegistroService {
   private final CultivoRepository cultivoRepo;
   private final VeredaRepository veredaRepo;
   private final LogRepository logRepo;
-  
 
   @PersistenceContext
   private EntityManager em;
@@ -70,7 +72,7 @@ public class RegistroServiceImpl implements RegistroService {
     p = productorRepo.save(p);
 
     saveLog(userId, "productores", "INSERT", p.getId(),
-      "Se creó el productor '" + nv(p.getNombre()) + "' (cédula " + nv(p.getCedula()) + ")");
+        "Se creó el productor '" + nv(p.getNombre()) + "' (cédula " + nv(p.getCedula()) + ")");
 
     FincaDto f = dto.getFinca();
     Finca finca = new Finca();
@@ -79,7 +81,7 @@ public class RegistroServiceImpl implements RegistroService {
 
     if (f.getVeredaCodigo() != null && !f.getVeredaCodigo().isBlank()) {
       Vereda v = veredaRepo.findFirstByCodigoCorto(f.getVeredaCodigo())
-        .orElseThrow(() -> new NotFoundException("Vereda no encontrada: " + f.getVeredaCodigo()));
+          .orElseThrow(() -> new NotFoundException("Vereda no encontrada: " + f.getVeredaCodigo()));
       finca.setVereda(v);
     } else {
       finca.setVereda(null);
@@ -95,11 +97,11 @@ public class RegistroServiceImpl implements RegistroService {
     finca = fincaRepo.save(finca);
 
     saveLog(userId, "fincas", "INSERT", finca.getId(),
-      "Se creó finca globalId=" + finca.getGlobalid() +
-        ", área=" + fmtNum(finca.getAreaTotal()) + " ha" +
-        ", actividad='" + nv(finca.getTipoActividad()) + "'" +
-        (finca.getGeom() != null ? (", lon=" + finca.getGeom().getX() + ", lat=" + finca.getGeom().getY()) : "") +
-        (finca.getVereda() != null ? (", vereda=" + nv(finca.getVereda().getCodigoCorto())) : ""));
+        "Se creó finca globalId=" + finca.getGlobalid() +
+            ", área=" + fmtNum(finca.getAreaTotal()) + " ha" +
+            ", actividad='" + nv(finca.getTipoActividad()) + "'" +
+            (finca.getGeom() != null ? (", lon=" + finca.getGeom().getX() + ", lat=" + finca.getGeom().getY()) : "") +
+            (finca.getVereda() != null ? (", vereda=" + nv(finca.getVereda().getCodigoCorto())) : ""));
 
     if (dto.getCultivos() != null) {
       for (CultivoDto c : dto.getCultivos()) {
@@ -111,16 +113,16 @@ public class RegistroServiceImpl implements RegistroService {
         cu = cultivoRepo.save(cu);
 
         saveLog(userId, "cultivos", "INSERT", cu.getId(),
-          "Se creó cultivo '" + nv(cu.getNombreCultivo()) + "', variedad='" + nv(cu.getVariedad()) +
-            "', área=" + fmtNum(cu.getArea()));
+            "Se creó cultivo '" + nv(cu.getNombreCultivo()) + "', variedad='" + nv(cu.getVariedad()) +
+                "', área=" + fmtNum(cu.getArea()));
       }
     }
 
     return Map.of(
-      "ok", true,
-      "productor_id", p.getId(),
-      "finca_id", finca.getId(),
-      "globalid", finca.getGlobalid().toString()
+        "ok", true,
+        "productor_id", p.getId(),
+        "finca_id", finca.getId(),
+        "globalid", finca.getGlobalid().toString()
     );
   }
 
@@ -128,7 +130,7 @@ public class RegistroServiceImpl implements RegistroService {
   public Map<String, Object> actualizarPorCedula(String cedula, RegistroUpdateDto dto, Integer userId) {
 
     Productor productor = productorRepo.findByCedula(cedula)
-      .orElseThrow(() -> new NotFoundException("Productor no encontrado: cédula=" + cedula));
+        .orElseThrow(() -> new NotFoundException("Productor no encontrado: cédula=" + cedula));
 
     // ---------------- PRODUCTOR (partial update) ----------------
     if (dto.getProductor() != null) {
@@ -165,9 +167,9 @@ public class RegistroServiceImpl implements RegistroService {
     if (dto.getFinca() != null && dto.getFinca().getGlobalid() != null && !dto.getFinca().getGlobalid().isBlank()) {
       UUID gid = UUID.fromString(dto.getFinca().getGlobalid());
       fincaTarget = fincas.stream()
-        .filter(ff -> gid.equals(ff.getGlobalid()))
-        .findFirst()
-        .orElseThrow(() -> new NotFoundException("Finca con ese globalid no pertenece al productor"));
+          .filter(ff -> gid.equals(ff.getGlobalid()))
+          .findFirst()
+          .orElseThrow(() -> new NotFoundException("Finca con ese globalid no pertenece al productor"));
     } else if (fincas.size() > 1 && dto.getFinca() != null) {
       throw new IllegalArgumentException("El productor tiene varias fincas. Especifique 'globalid' en 'finca'.");
     }
@@ -177,22 +179,18 @@ public class RegistroServiceImpl implements RegistroService {
       FincaUpdateDto fu = dto.getFinca();
       List<String> cambios = new ArrayList<>();
 
-      // ✅ lon/lat: ambos o ninguno (si viene solo uno => 400)
       boolean lonProvided = fu.getLon() != null;
       boolean latProvided = fu.getLat() != null;
 
-      if (lonProvided ^ latProvided) { // XOR
-        throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST,
-          "Debe enviar lon y lat juntos (ambos o ninguno)."
-        );
+      if (lonProvided ^ latProvided) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debe enviar lon y lat juntos (ambos o ninguno).");
       }
 
       if (lonProvided && latProvided) {
         boolean existeOtro = fincaRepo.existsByLonLat(fu.getLon(), fu.getLat());
         boolean esMismo = fincaTarget.getGeom() != null &&
-          Double.compare(fincaTarget.getGeom().getX(), fu.getLon()) == 0 &&
-          Double.compare(fincaTarget.getGeom().getY(), fu.getLat()) == 0;
+            Double.compare(fincaTarget.getGeom().getX(), fu.getLon()) == 0 &&
+            Double.compare(fincaTarget.getGeom().getY(), fu.getLat()) == 0;
 
         if (existeOtro && !esMismo) {
           throw new IllegalArgumentException("Ya existe otra finca registrada en ese punto (lon/lat).");
@@ -200,7 +198,7 @@ public class RegistroServiceImpl implements RegistroService {
 
         if (!esMismo) {
           String antes = (fincaTarget.getGeom() == null) ? "null" :
-            "(" + fincaTarget.getGeom().getX() + ", " + fincaTarget.getGeom().getY() + ")";
+              "(" + fincaTarget.getGeom().getX() + ", " + fincaTarget.getGeom().getY() + ")";
           String despues = "(" + fu.getLon() + ", " + fu.getLat() + ")";
           cambios.add("ubicación lon/lat: '" + antes + "' → '" + despues + "'");
 
@@ -228,7 +226,7 @@ public class RegistroServiceImpl implements RegistroService {
           fincaTarget.setVereda(null);
         } else {
           Vereda v = veredaRepo.findFirstByCodigoCorto(fu.getCodigoVereda())
-            .orElseThrow(() -> new NotFoundException("Vereda no encontrada: " + fu.getCodigoVereda()));
+              .orElseThrow(() -> new NotFoundException("Vereda no encontrada: " + fu.getCodigoVereda()));
           fincaTarget.setVereda(v);
           veredaDespues = v.getCodigoCorto();
         }
@@ -244,12 +242,8 @@ public class RegistroServiceImpl implements RegistroService {
       for (CultivoUpsertDto cu : dto.getCultivosUpsert()) {
 
         if (cu.getId() == null) {
-          // CREATE -> nombre requerido
           if (cu.getNombreCultivo() == null || cu.getNombreCultivo().isBlank()) {
-            throw new ResponseStatusException(
-              HttpStatus.BAD_REQUEST,
-              "nombreCultivo es obligatorio para crear cultivo."
-            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "nombreCultivo es obligatorio para crear cultivo.");
           }
 
           Cultivo c = new Cultivo();
@@ -260,13 +254,12 @@ public class RegistroServiceImpl implements RegistroService {
           c = cultivoRepo.save(c);
 
           saveLog(userId, "cultivos", "INSERT", c.getId(),
-            "Se creó cultivo '" + nv(c.getNombreCultivo()) + "', variedad='" + nv(c.getVariedad()) +
-              "', área=" + fmtNum(c.getArea()));
+              "Se creó cultivo '" + nv(c.getNombreCultivo()) + "', variedad='" + nv(c.getVariedad()) +
+                  "', área=" + fmtNum(c.getArea()));
 
         } else {
-          // UPDATE -> campos opcionales
           Cultivo c = cultivoRepo.findById(cu.getId())
-            .orElseThrow(() -> new NotFoundException("Cultivo no encontrado: id=" + cu.getId()));
+              .orElseThrow(() -> new NotFoundException("Cultivo no encontrado: id=" + cu.getId()));
 
           if (!Objects.equals(c.getFinca().getId(), fincaTarget.getId())) {
             throw new IllegalArgumentException("El cultivo no pertenece a la finca objetivo.");
@@ -297,7 +290,7 @@ public class RegistroServiceImpl implements RegistroService {
     if (dto.getCultivosDeleteIds() != null) {
       for (Integer idDel : dto.getCultivosDeleteIds()) {
         Cultivo c = cultivoRepo.findById(idDel)
-          .orElseThrow(() -> new NotFoundException("Cultivo no encontrado: id=" + idDel));
+            .orElseThrow(() -> new NotFoundException("Cultivo no encontrado: id=" + idDel));
 
         if (!Objects.equals(c.getFinca().getId(), fincaTarget.getId())) {
           throw new IllegalArgumentException("El cultivo a eliminar no pertenece a la finca objetivo.");
@@ -306,8 +299,8 @@ public class RegistroServiceImpl implements RegistroService {
         cultivoRepo.deleteById(idDel);
 
         saveLog(userId, "cultivos", "DELETE", idDel,
-          "Se eliminó cultivo id=" + idDel + ", nombre='" + nv(c.getNombreCultivo()) +
-            "', variedad='" + nv(c.getVariedad()) + "', área=" + fmtNum(c.getArea()));
+            "Se eliminó cultivo id=" + idDel + ", nombre='" + nv(c.getNombreCultivo()) +
+                "', variedad='" + nv(c.getVariedad()) + "', área=" + fmtNum(c.getArea()));
       }
     }
 
@@ -317,19 +310,19 @@ public class RegistroServiceImpl implements RegistroService {
   @Override
   public void eliminarCultivo(Integer idCultivo, Integer userId) {
     Cultivo c = cultivoRepo.findById(idCultivo)
-      .orElseThrow(() -> new NotFoundException("Cultivo no encontrado: id=" + idCultivo));
+        .orElseThrow(() -> new NotFoundException("Cultivo no encontrado: id=" + idCultivo));
 
     cultivoRepo.deleteById(idCultivo);
 
     saveLog(userId, "cultivos", "DELETE", idCultivo,
-      "Se eliminó cultivo id=" + idCultivo + ", nombre='" + nv(c.getNombreCultivo()) +
-        "', variedad='" + nv(c.getVariedad()) + "', área=" + fmtNum(c.getArea()));
+        "Se eliminó cultivo id=" + idCultivo + ", nombre='" + nv(c.getNombreCultivo()) +
+            "', variedad='" + nv(c.getVariedad()) + "', área=" + fmtNum(c.getArea()));
   }
 
   @Override
   public void eliminarProductorPorCedula(String cedula, Integer userId) {
     Productor prod = productorRepo.findByCedula(cedula)
-      .orElseThrow(() -> new NotFoundException("Productor no encontrado: cédula=" + cedula));
+        .orElseThrow(() -> new NotFoundException("Productor no encontrado: cédula=" + cedula));
 
     List<Finca> fincas = fincaRepo.findByProductorId(prod.getId());
     for (Finca f : fincas) {
@@ -337,29 +330,89 @@ public class RegistroServiceImpl implements RegistroService {
 
       for (Cultivo c : cultivos) {
         saveLog(userId, "cultivos", "DELETE", c.getId(),
-          "Se eliminó cultivo id=" + c.getId() + " (por borrado de productor " + nv(prod.getCedula()) + ")");
+            "Se eliminó cultivo id=" + c.getId() + " (por borrado de productor " + nv(prod.getCedula()) + ")");
       }
       cultivoRepo.deleteAll(cultivos);
 
       saveLog(userId, "fincas", "DELETE", f.getId(),
-        "Se eliminó finca id=" + f.getId() + " (por borrado de productor " + nv(prod.getCedula()) + ")");
+          "Se eliminó finca id=" + f.getId() + " (por borrado de productor " + nv(prod.getCedula()) + ")");
     }
 
     fincaRepo.deleteAll(fincas);
 
     productorRepo.delete(prod);
     saveLog(userId, "productores", "DELETE", prod.getId(),
-      "Se eliminó productor '" + nv(prod.getNombre()) + "' (cédula " + nv(prod.getCedula()) + ")");
+        "Se eliminó productor '" + nv(prod.getNombre()) + "' (cédula " + nv(prod.getCedula()) + ")");
   }
 
   @Override
   @Transactional(Transactional.TxType.SUPPORTS)
   public RegistroResponseDto obtenerPorCedula(String cedula) {
     Productor prod = productorRepo.findByCedula(cedula)
-      .orElseThrow(() -> new NotFoundException("Productor no encontrado: cédula=" + cedula));
+        .orElseThrow(() -> new NotFoundException("Productor no encontrado: cédula=" + cedula));
 
     List<Finca> fincas = fincaRepo.findByProductorId(prod.getId());
     Finca finca = fincas.isEmpty() ? null : fincas.get(0);
+
+    List<Cultivo> cultivos = (finca == null) ? List.of() : cultivoRepo.findByFincaId(finca.getId());
+    return toRegistroResponseDto(prod, finca, cultivos);
+  }
+
+  // ✅ LISTADO PAGINADO
+  @Override
+  public RegistroPageResponseDto listarRegistros(String q, int page, int size) {
+
+    page = Math.max(page, 0);
+    size = Math.min(Math.max(size, 1), 200);
+
+    Pageable pageable = PageRequest.of(page, size, Sort.by("nombre").ascending());
+
+    Page<Productor> p;
+    String qq = (q == null ? "" : q.trim());
+
+    if (qq.isEmpty()) {
+      p = productorRepo.findAll(pageable);
+    } else {
+      p = productorRepo.findByCedulaContainingIgnoreCaseOrNombreContainingIgnoreCase(qq, qq, pageable);
+    }
+
+    List<Productor> productores = p.getContent();
+    if (productores.isEmpty()) {
+      return new RegistroPageResponseDto(List.of(), page, size, p.getTotalElements(), p.getTotalPages());
+    }
+
+    // 1) fincas batch
+    List<Integer> prodIds = productores.stream().map(Productor::getId).toList();
+    List<Finca> fincas = fincaRepo.findByProductorIdIn(prodIds);
+
+    // tomar “primera” finca por productor (misma lógica de obtenerPorCedula)
+    Map<Integer, Finca> fincaByProdId = fincas.stream()
+        .collect(Collectors.toMap(f -> f.getProductor().getId(), Function.identity(), (a, b) -> a));
+
+    // 2) cultivos batch
+    List<Integer> fincaIds = fincas.stream().map(Finca::getId).toList();
+    List<Cultivo> cultivos = fincaIds.isEmpty() ? List.of() : cultivoRepo.findByFincaIdIn(fincaIds);
+
+    Map<Integer, List<Cultivo>> cultivosByFincaId = cultivos.stream()
+        .collect(Collectors.groupingBy(c -> c.getFinca().getId()));
+
+    // 3) armar respuesta
+    List<RegistroResponseDto> out = new ArrayList<>();
+
+    for (Productor prod : productores) {
+      Finca finca = fincaByProdId.get(prod.getId());
+      List<Cultivo> cults = (finca == null)
+          ? List.of()
+          : cultivosByFincaId.getOrDefault(finca.getId(), List.of());
+
+      out.add(toRegistroResponseDto(prod, finca, cults));
+    }
+
+    return new RegistroPageResponseDto(out, page, size, p.getTotalElements(), p.getTotalPages());
+  }
+
+  // ✅ Mapper reutilizable
+  private RegistroResponseDto toRegistroResponseDto(Productor prod, Finca finca, List<Cultivo> cultivos) {
 
     RegistroResponseDto dto = new RegistroResponseDto();
 
@@ -387,9 +440,7 @@ public class RegistroServiceImpl implements RegistroService {
       dto.setFinca(fd);
     }
 
-    List<CultivoDto> cds = (finca == null)
-      ? List.of()
-      : cultivoRepo.findByFincaId(finca.getId()).stream()
+    List<CultivoDto> cds = (cultivos == null ? List.<Cultivo>of() : cultivos).stream()
         .map(c -> {
           CultivoDto x = new CultivoDto();
           x.setId(c.getId());
@@ -401,10 +452,12 @@ public class RegistroServiceImpl implements RegistroService {
         .toList();
 
     dto.setCultivos(cds);
-
     return dto;
   }
 
+  // =========================
+  // LOG & HELPERS
+  // =========================
   private void saveLog(Integer userId, String tabla, String op, Integer idAfectado, String detalle) {
     Log log = new Log();
     log.setFechaHora(LocalDateTime.now());
@@ -424,10 +477,6 @@ public class RegistroServiceImpl implements RegistroService {
     logRepo.save(log);
   }
 
-  private void saveLog(Integer userId, String tabla, String op, Integer idAfectado) {
-    saveLog(userId, tabla, op, idAfectado, null);
-  }
-
   private static String nv(Object o) {
     return o == null ? "" : String.valueOf(o);
   }
@@ -438,15 +487,13 @@ public class RegistroServiceImpl implements RegistroService {
 
   private static void addChange(List<String> out, String campo, Object antes, Object despues) {
     if (!Objects.equals(antes, despues)) {
-      String a = String.valueOf(antes);
-      String d = String.valueOf(despues);
-      out.add(campo + ": '" + a + "' → '" + d + "'");
+      out.add(campo + ": '" + String.valueOf(antes) + "' → '" + String.valueOf(despues) + "'");
     }
   }
 
   private static String joinChanges(List<String> changes) {
     return (changes == null || changes.isEmpty())
-      ? "(sin cambios detectados)"
-      : String.join("; ", changes);
+        ? "(sin cambios detectados)"
+        : String.join("; ", changes);
   }
 }

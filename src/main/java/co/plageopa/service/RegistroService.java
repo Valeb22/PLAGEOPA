@@ -1,6 +1,7 @@
 package co.plageopa.service;
 
 import co.plageopa.DTO.RegistroCreateDto;
+import co.plageopa.DTO.RegistroPageResponseDto;
 import co.plageopa.DTO.RegistroResponseDto;
 import co.plageopa.DTO.RegistroUpdateDto;
 
@@ -12,5 +13,6 @@ public interface RegistroService {
   void eliminarCultivo(Integer idCultivo, Integer userId);
   void eliminarProductorPorCedula(String cedula, Integer userId);
   RegistroResponseDto obtenerPorCedula(String cedula);
+  RegistroPageResponseDto listarRegistros(String q, int page, int size);
 
 }

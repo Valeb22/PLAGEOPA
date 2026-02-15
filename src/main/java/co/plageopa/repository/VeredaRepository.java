@@ -15,4 +15,6 @@ public interface VeredaRepository extends JpaRepository<Vereda, Integer> {
       nativeQuery = true
     )
     Optional<Vereda> findFirstByCodigoCorto(@Param("codigo") String codigo);
+    Optional<Vereda> findByCodigoCorto(String codigoCorto);
+
 }
